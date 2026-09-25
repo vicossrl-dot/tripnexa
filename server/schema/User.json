@@ -1,0 +1,28 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "display_name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "home_city": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "dietary_preference": {
+      "type": "string"
+    },
+    "preferred_airline": {
+      "type": "string"
+    },
+    "dream_destination": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

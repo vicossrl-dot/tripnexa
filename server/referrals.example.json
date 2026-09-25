@@ -1,0 +1,7 @@
+{
+  "allowed_hosts": ["booking.example.com"],
+  "rules": [
+    { "place_id": "REPLACE_WITH_GOOGLE_PLACE_ID", "url": "https://booking.example.com/exact-product?affiliate=YOUR_PUBLIC_REFERRAL_ID" },
+    { "name": "Exact place name", "destination": "Exact trip destination", "url_template": "https://booking.example.com/search?q={name}&city={destination}&date={date}&affiliate=YOUR_PUBLIC_REFERRAL_ID" }
+  ]
+}

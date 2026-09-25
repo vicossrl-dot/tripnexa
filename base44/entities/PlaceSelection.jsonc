@@ -1,0 +1,115 @@
+{
+  "name": "PlaceSelection",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "trip_item_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "mandatory",
+        "preferred",
+        "suggestion",
+        "excluded"
+      ]
+    },
+    "desired_duration_min": {
+      "type": "number"
+    },
+    "fixed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "fixed_time": {
+      "type": "string"
+    },
+    "indoor_outdoor": {
+      "type": "string",
+      "enum": [
+        "indoor",
+        "outdoor",
+        "both",
+        "unknown"
+      ]
+    },
+    "ticket_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "entry",
+        "guided_tour",
+        "zone",
+        "package"
+      ]
+    },
+    "ticket_purchased": {
+      "type": "boolean"
+    },
+    "entry_time": {
+      "type": "string"
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "place_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unresolved",
+        "resolved",
+        "scheduled",
+        "conflict",
+        "unavailable"
+      ]
+    },
+    "estimated_cost": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "fit_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

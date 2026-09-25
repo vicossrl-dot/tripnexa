@@ -1,0 +1,142 @@
+{
+  "name": "ItineraryItem",
+  "type": "object",
+  "properties": {
+    "selection_id": {
+      "type": "string"
+    },
+    "lat": {
+      "type": "number"
+    },
+    "lng": {
+      "type": "number"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "sort_order": {
+      "type": "number"
+    },
+    "step_type": {
+      "type": "string",
+      "enum": [
+        "visit",
+        "transport",
+        "meal",
+        "break",
+        "free",
+        "transfer",
+        "arrival",
+        "departure",
+        "access"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "start_time": {
+      "type": "string"
+    },
+    "start_datetime": {
+      "type": "string"
+    },
+    "end_datetime": {
+      "type": "string"
+    },
+    "end_time": {
+      "type": "string"
+    },
+    "duration_min": {
+      "type": "number"
+    },
+    "location": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "place_id": {
+      "type": "string"
+    },
+    "ticket_type": {
+      "type": "string"
+    },
+    "ticket_status": {
+      "type": "string",
+      "enum": [
+        "needed",
+        "purchased",
+        "free",
+        "to_verify",
+        "unavailable"
+      ]
+    },
+    "cost": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "source_status": {
+      "type": "string",
+      "enum": [
+        "confirmed_by_user",
+        "confirmed_by_document",
+        "api_provided",
+        "estimated",
+        "unknown",
+        "expired",
+        "conflicting"
+      ]
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "locked": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "route_origin": {
+      "type": "string"
+    },
+    "route_destination": {
+      "type": "string"
+    },
+    "route_mode": {
+      "type": "string",
+      "enum": [
+        "walk",
+        "transit",
+        "taxi",
+        "car"
+      ]
+    },
+    "route_duration_min": {
+      "type": "number"
+    },
+    "route_steps": {
+      "type": "string"
+    },
+    "next_step": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number"
+    },
+    "meal_choice": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "date",
+    "step_type",
+    "title"
+  ]
+}

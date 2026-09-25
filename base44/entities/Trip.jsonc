@@ -1,0 +1,201 @@
+{
+  "name": "Trip",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "cover_image_url": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "original_currency": {
+      "type": "string"
+    },
+    "exchange_rate": {
+      "type": "number"
+    },
+    "exchange_rate_updated_at": {
+      "type": "string"
+    },
+    "trip_type": {
+      "type": "string",
+      "enum": [
+        "couple",
+        "family",
+        "friends",
+        "solo",
+        "business_leisure"
+      ]
+    },
+    "adults": {
+      "type": "number"
+    },
+    "children_ages": {
+      "type": "string"
+    },
+    "rooms": {
+      "type": "number"
+    },
+    "budget_total": {
+      "type": "number"
+    },
+    "budget_per_person": {
+      "type": "number"
+    },
+    "budget_accommodation": {
+      "type": "number"
+    },
+    "budget_accommodation_mode": {
+      "type": "string",
+      "enum": [
+        "total",
+        "per_person"
+      ]
+    },
+    "budget_activities": {
+      "type": "number"
+    },
+    "budget_transport": {
+      "type": "number"
+    },
+    "arrival_mode": {
+      "type": "string",
+      "enum": [
+        "flight",
+        "train",
+        "car",
+        "other"
+      ]
+    },
+    "departure_mode": {
+      "type": "string",
+      "enum": [
+        "flight",
+        "train",
+        "car",
+        "other"
+      ]
+    },
+    "plan_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "needs_verification",
+        "ready",
+        "in_progress",
+        "completed"
+      ]
+    },
+    "plan_version": {
+      "type": "number"
+    },
+    "last_validated_at": {
+      "type": "string"
+    },
+    "planning_step": {
+      "type": "number"
+    },
+    "interests": {
+      "type": "string"
+    },
+    "exclusions": {
+      "type": "string"
+    },
+    "pace": {
+      "type": "string",
+      "enum": [
+        "relaxed",
+        "balanced",
+        "intense"
+      ]
+    },
+    "max_walk_per_day_min": {
+      "type": "number"
+    },
+    "max_walk_per_segment_min": {
+      "type": "number"
+    },
+    "transport_preference": {
+      "type": "string",
+      "enum": [
+        "walk",
+        "transit",
+        "taxi",
+        "car",
+        "mixed"
+      ]
+    },
+    "stroller": {
+      "type": "boolean"
+    },
+    "mobility_needs": {
+      "type": "string"
+    },
+    "meal_duration_min": {
+      "type": "number"
+    },
+    "buffer_min": {
+      "type": "number"
+    },
+    "stay_status": {
+      "type": "string",
+      "enum": [
+        "booked",
+        "chosen",
+        "unconfirmed",
+        "none"
+      ]
+    },
+    "share_token": {
+      "type": "string"
+    },
+    "share_enabled": {
+      "type": "boolean"
+    },
+    "share_hide_stay": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+export default {id:'tiqets',name:'Tiqets',description:'Attraction & museum tickets',hosts:['tiqets.com','www.tiqets.com'],root:'tiqets.com',tracking:[],portal:'https://www.tiqets.com/en/partner-program/',secret:'TIQETS_API_TOKEN'};

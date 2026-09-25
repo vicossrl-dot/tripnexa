@@ -1,0 +1,16 @@
+import { useEffect,useState } from 'react';
+import { Dialog,DialogContent,DialogTitle,DialogDescription } from '@/components/ui/dialog';
+import { api } from '@/api/client';
+import { itineraryTimeLabel } from '@/lib/itinerary-time-label';
+import PlacePhotos from '@/components/planning/PlacePhotos';
+export default function MealOptionsDialog({trip,item,onClose,onSaved}) {
+ const [data,setData]=useState(null),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{let active=true;api.mealOptions(trip.id,item.id).then(value=>{if(active)setData(value);}).catch(()=>{if(active)setError("We couldn't load meal options right now. Your itinerary is unchanged.");}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[trip.id,item.id]);
+ async function load(){setLoading(true);setError('');try{setData(await api.mealOptions(trip.id,item.id,true));}catch{setError('Meal options are temporarily unavailable. Please try again.');}finally{setLoading(false);}}
+ async function choose(restaurant){setSaving(true);setError('');try{onSaved(await api.chooseMeal(trip.id,item.id,{token:data.token,place_id:restaurant.place_id}));onClose();}catch(failure){setError(failure.message);}finally{setSaving(false);}}
+ return <Dialog open onOpenChange={open=>{if(!open&&!saving)onClose();}}><DialogContent className="trip-modal max-w-2xl w-[95vw] max-h-[90dvh] overflow-y-auto"><DialogTitle>Meal options</DialogTitle><DialogDescription className="text-white/60">{itineraryTimeLabel(item)}{data?.context.anchor&&` · Near ${data.context.anchor.name}`}</DialogDescription>
+  {loading&&<p role="status">Finding nearby meal options…</p>}{error&&<p role="alert" className="text-amber-200">{error}</p>}
+  {!loading&&data&&<><p className="text-xs text-white/60">Google Maps · {data.notice}</p>{!data.restaurants.length&&<p>No nearby matches for these preferences. Try another cuisine or dining budget.</p>}<div className="space-y-4">{data.restaurants.map(restaurant=><article data-restaurant-card key={restaurant.place_id} className="rounded-xl border border-white/15 p-4 space-y-2"><h3 className="font-semibold">{restaurant.name}</h3><p className="text-sm text-white/70">{restaurant.category}{restaurant.price_label&&` · ${restaurant.price_label}`}</p><p className="text-sm">{restaurant.rating!=null?`${restaurant.rating} ★`:'Rating unavailable'}{restaurant.review_count!=null&&` · ${restaurant.review_count.toLocaleString()} reviews`} · About {restaurant.distance_m} m away</p><p className="text-sm text-white/60">{restaurant.address}</p><PlacePhotos placeId={restaurant.place_id} name={restaurant.name} limit={1}/><div className="flex flex-wrap items-center gap-3"><a className="trip-link text-sm" href={restaurant.maps_url} target="_blank" rel="noopener noreferrer">Open in Google Maps</a><button className="trip-button secondary" disabled={saving} onClick={()=>choose(restaurant)}>Choose for this meal</button></div></article>)}</div></>}
+  <div className="flex gap-3"><button className="trip-button secondary" disabled={loading||saving} onClick={load}>{error?'Retry':'Refresh options'}</button><button className="trip-button secondary" disabled={saving} onClick={onClose}>Close</button></div>
+ </DialogContent></Dialog>;
+}

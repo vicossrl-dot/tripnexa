@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {once} from 'node:events';
+import {writeFile,mkdir} from 'node:fs/promises';
+import {openBrowser} from './browser-driver.mjs';
+assert(process.argv.includes('--live')&&/_test$/.test(process.env.MYSQL_TEST_DATABASE||''));
+process.env.MYSQL_DATABASE=process.env.MYSQL_TEST_DATABASE;process.env.NODE_ENV='test';
+const {pool}=await import('../server/db.js'),{config}=await import('../server/config.js'),{createApp}=await import('../server/app.js'),{hashPassword}=await import('../server/security.js');
+const output='.local/final-verification',report={checks:[],failures:[]};await mkdir(output,{recursive:true});
+const owner=randomUUID(),email=owner+'@provider-followup.test',password=randomUUID()+'Password!';
+const source=[{name:'Pantheon',place_id:'ChIJqUCGZ09gLxMRLM42IPpl0co',address:'Piazza della Rotonda, 00186 Roma RM, Italy',lat:41.8986108,lng:12.4768729},{name:'Colosseum',place_id:'ChIJrRMgU7ZhLxMRxAOFkC7I8Sg',address:'P.za del Colosseo, 1, 00184 Roma RM, Italy',lat:41.8902102,lng:12.4922309}];
+await pool.execute('INSERT INTO users(id,email,password_hash,email_verified)VALUES(?,?,?,TRUE)',[owner,email,await hashPassword(password)]);
+const server=createApp().listen(0,'127.0.0.1');await once(server,'listening');const root='http://127.0.0.1:'+server.address().port;config.appUrl=root;process.env.PUBLIC_APP_URL=config.appUrl;
+let cookie,browser;
+const api=async(route,body)=>{const r=await fetch(root+'/api'+route,{method:body?'POST':'GET',headers:{Cookie:cookie||'','Content-Type':'application/json','X-Requested-With':'TripSync'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(160000)});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];const data=await r.json();assert(r.ok,JSON.stringify(data));return data;};
+const check=async(name,action)=>{try{const detail=await action();report.checks.push({name,detail});console.log('PASS',name,JSON.stringify(detail));return detail;}catch(error){report.failures.push({name,error:error.message});console.log('FAIL',name,error.message);}finally{await writeFile(output+'/followup.json',JSON.stringify(report,null,2));}};
+try{
+ await api('/auth/login',{email,password});
+ const trip=await api('/entities/Trip',{name:'Rome · real provider check',destination:'Rome',adults:1,start_date:'2026-10-05',end_date:'2026-10-09',transport_preference:'mixed',meal_duration_min:45,buffer_min:10});
+ for(const p of source)await api('/entities/PlaceSelection',{...p,trip_id:trip.id,priority:'mandatory',selection_source:'google',desired_duration_min:45});
+ await api('/entities/TripItem',{trip_id:trip.id,title:'Rome test stay',category:'stay',address:'Central Rome',lat:41.90,lng:12.48});
+ const base='/trips/'+trip.id;
+ await check('OpenAI itinerary on a focused five-day trip',async()=>{const plan=await api(base+'/itinerary',{use_ai:true});return {generation:plan.generation,visits:plan.items.filter(i=>i.step_type==='visit').length};});
+ await check('OpenAI change preview/apply and persistence',async()=>{const plan=await api(base+'/itinerary'),visit=plan.items.find(i=>i.step_type==='visit');const day=visit.date==='2026-10-07'?'2026-10-08':'2026-10-07';const preview=await api(base+'/itinerary/preview',{expected_version:plan.version,request:`Move ${visit.title} to ${day}. Keep all other visits on their existing days. No time preference.`});await api(base+'/itinerary/apply',{token:preview.token});const after=await api(base+'/itinerary');assert(after.items.some(i=>i.selection_id===visit.selection_id&&i.date===day));return {persisted:true};});
+ await check('Real Places opening hours response',async()=>{const {google}=await import('../server/places.js');const data=await google('https://places.googleapis.com/v1/places/'+source[0].place_id,{headers:{'X-Goog-Api-Key':config.googleMapsKey,'X-Goog-FieldMask':'businessStatus,regularOpeningHours'}},fetch);return {businessStatus:data.businessStatus,periods:data.regularOpeningHours?.periods?.length??null};});
+ browser=await openBrowser(output+'/followup-browser');await browser.viewport(1440);
+ await browser.command('Page.navigate',{url:root+'/login'});await browser.text('Welcome back');await browser.input('#email',email);await browser.input('#password',password);await browser.evaluate("document.querySelector('form').requestSubmit()");await browser.text('Your Trips');
+ await browser.command('Page.navigate',{url:root+'/trip/'+trip.id});await browser.text('Trip Health');await browser.click('Review readiness');await browser.click('Preview repair');await browser.wait("document.body.innerText.includes('Review your itinerary update')",60000);await browser.screenshot('real-repair');await browser.click('Apply repair');await browser.text('Undo last itinerary update');await browser.screenshot('real-overview');
+ await browser.command('Page.navigate',{url:root+'/trip/'+trip.id+'/itinerary'});await browser.text('Change itinerary');await browser.screenshot('real-itinerary');await browser.viewport(390,844);await browser.screenshot('real-itinerary-mobile');await check('Real-provider trip repair and responsive itinerary',async()=>({ok:true}));
+}finally{await browser?.close();await new Promise(resolve=>server.close(resolve));await pool.execute('DELETE FROM users WHERE id=?',[owner]);await pool.end();await writeFile(output+'/followup.json',JSON.stringify(report,null,2));}

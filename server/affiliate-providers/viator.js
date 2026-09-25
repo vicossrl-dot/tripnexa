@@ -1,0 +1,1 @@
+export default {id:'viator',name:'Viator',description:'Tours, admission & experiences',hosts:['viator.com','www.viator.com'],root:'viator.com',tracking:['pid','mcid','medium'],portal:'https://partnerresources.viator.com/travel-content/links/create-links/',secret:'VIATOR_API_KEY'};

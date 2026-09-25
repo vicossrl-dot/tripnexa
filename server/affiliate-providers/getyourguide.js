@@ -1,0 +1,1 @@
+export default {id:'getyourguide',name:'GetYourGuide',description:'Tickets, tours & experiences',hosts:['getyourguide.com','www.getyourguide.com'],root:'getyourguide.com',tracking:['partner_id'],portal:'https://partner.getyourguide.com/',secret:'GETYOURGUIDE_API_KEY'};

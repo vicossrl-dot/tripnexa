@@ -1,0 +1,19 @@
+{
+  "name": "TodoItem",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "done": {
+      "type": "boolean",
+      "default": false
+    },
+    "board_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
