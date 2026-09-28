@@ -15,11 +15,12 @@ export default function Admin(){
  const {user}=useAuth();const [status,setStatus]=useState(null),[error,setError]=useState('');
  const allowed=['ADMIN','SUPER_ADMIN'].includes(user?.role);
  async function load(){setError('');try{setStatus(await adminApi('/mfa/status'));}catch(failure){setError(failure.message);}}
+ function markVerified(){setError('');setStatus(current=>current?{...current,verified:true}:current);}
  useEffect(()=>{if(allowed)load();},[allowed]);
  if(!allowed)return <div className="admin-denied"><h1>Access restricted</h1><p>Your account does not have administrator access.</p><Link to="/">Return to trips</Link></div>;
  if(error)return <div className="admin-denied"><h1>Administration unavailable</h1><p role="alert">{error}</p><button onClick={load}>Retry</button></div>;
  if(!status)return <div className="admin-denied" role="status">Checking administrator access…</div>;
- if(!status.verified)return <div className="admin-shell admin-enrollment"><AdminMfa status={status} onVerified={load}/><Link to="/">Return to trips</Link></div>;
+ if(!status.verified)return <div className="admin-shell admin-enrollment"><AdminMfa status={status} onVerified={markVerified}/><Link to="/">Return to trips</Link></div>;
  return <AdminLayout><Routes>
   <Route index element={<AdminDashboard/>}/>
   <Route path="domains" element={<AdminDomains/>}/><Route path="authentication" element={<AdminAuthentication/>}/>
