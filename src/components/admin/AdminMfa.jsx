@@ -4,7 +4,7 @@ export default function AdminMfa({status,onVerified}) {
  const [password,setPassword]=useState(''),[code,setCode]=useState(''),[setup,setSetup]=useState(null),[recovery,setRecovery]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
  async function submit(event){event.preventDefault();setBusy(true);setError('');try{
   if(!status.enabled&&!setup){setSetup(await adminApi('/mfa/setup','POST',{password}));}
-  else {const result=await adminApi(status.enabled?'/mfa/verify':'/mfa/confirm','POST',{password,code});setPassword('');setCode('');setSetup(null);if(result.recoveryCodes)setRecovery(result.recoveryCodes);else onVerified();}
+  else {const result=await adminApi(status.enabled?'/mfa/verify':'/mfa/confirm','POST',{password,code});setPassword('');setCode('');setSetup(null);if(result.recoveryCodes)setRecovery(result.recoveryCodes);else await onVerified();}
  }catch(failure){setError(failure.message);}finally{setBusy(false);}}
  return <section className="admin-card admin-auth"><p className="admin-eyebrow">Administrator security</p><h1>{recovery?'Save your recovery codes':status.enabled?'Verify your authenticator':'Set up two-factor authentication'}</h1>
  {!status.masterKeyConfigured&&<p role="alert">The server operator must configure ADMIN_SECRETS_MASTER_KEY before secure administration is available. Existing trips remain accessible.</p>}

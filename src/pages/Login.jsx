@@ -8,8 +8,10 @@ import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { safeReturnTo } from '@/lib/authReturnTo';
 import SocialButtons from '@/components/SocialButtons';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Login() {
+  const { checkUserAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(new URLSearchParams(window.location.search).has('socialError')?'Social sign-in was cancelled or could not be completed. Please try again.':'');
@@ -19,9 +21,21 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     try {
-      await api.auth.loginViaEmailPassword(email, password);
-      window.location.href = safeReturnTo();
+      // Read the actual DOM values too. Browser/password-manager autofill
+      // does not always trigger React onChange for controlled inputs.
+      const form = new FormData(e.currentTarget);
+      const submittedEmail = String(form.get("email") || email || "").trim();
+      const submittedPassword = String(form.get("password") || password || "");
+
+      await api.auth.loginViaEmailPassword(submittedEmail, submittedPassword);
+
+      // Confirm that the new server session is visible before leaving /login.
+      await checkUserAuth();
+
+      const target = safeReturnTo();
+      window.location.replace(target);
     } catch (err) {
       setError(err.message || "Invalid email or password");
     } finally {
@@ -59,6 +73,7 @@ export default function Login() {
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="email"
+              name="email"
               type="email"
               autoComplete="email"
               autoFocus
@@ -81,6 +96,7 @@ export default function Login() {
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="password"
+              name="password"
               type="password" minLength={12} maxLength={128}
               autoComplete="current-password"
               placeholder="••••••••"
