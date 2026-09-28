@@ -33,7 +33,7 @@ export async function renderPdf(html){
   let directory,child,socket;const pending=new Map();
   try{
     directory=await mkdtemp(path.join(os.tmpdir(),'tripsync-pdf-'));
-    child=spawn(process.env.CHROME_PATH||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':'google-chrome'),['--headless=new','--no-first-run','--no-default-browser-check','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+directory,'about:blank'],{windowsHide:true,stdio:['ignore','ignore','pipe']});
+    child=spawn(process.env.CHROME_PATH||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':'google-chrome'),['--headless=new','--no-sandbox','--no-first-run','--no-default-browser-check','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+directory,'about:blank'],{windowsHide:true,stdio:['ignore','ignore','pipe']});
     const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Chrome timeout')),15000);child.once('error',error=>{clearTimeout(timer);reject(error);});child.stderr.on('data',chunk=>{const match=chunk.toString().match(/DevTools listening on (ws:\/\/[^\s]+)/);if(match){clearTimeout(timer);resolve(match[1]);}});});
     socket=new WebSocket(endpoint);await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Chrome connection timeout')),10000);socket.addEventListener('open',()=>{clearTimeout(timer);resolve();});socket.addEventListener('error',reject);});
     let sequence=0,session;
