@@ -9,7 +9,7 @@ export default function AccountSecurity(){
  async function submit(event){event.preventDefault();setBusy(true);setError('');try{
   const result=await api.account(action==='revoke'?'sessions/revoke':action,{password,newPassword,confirmation:action==='revoke'?'REVOKE':confirmation});
   if(action==='password'){window.location.assign('/login');return;}
-  if(action==='export'){const url=URL.createObjectURL(new Blob([JSON.stringify(result,null,2)],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='TripSync-my-data.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+  if(action==='export'){const url=URL.createObjectURL(new Blob([JSON.stringify(result,null,2)],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='TripNexa-my-data.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
   setMessage(result.message|| (action==='revoke'?'Other devices have been signed out.':'Your data export is ready.'));setAction('');setPassword('');await load();
  }catch(e){setError(e.message);}finally{setBusy(false);}}
  const titles={password:'Change password',revoke:'Sign out other devices',deletion:'Request account deletion',export:'Download my data'};

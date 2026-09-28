@@ -10,7 +10,7 @@ import { encryptSecret, decryptSecret, masterKeyConfigured } from './crypto.js';
 import { auditRequest } from './audit.js';
 import { requirePrivileged, requireRecentAuth } from './permissions.js';
 
-const totp = (secret,email='TripSync administrator') => new OTPAuth.TOTP({issuer:'TripSync',label:email,algorithm:'SHA1',digits:6,period:30,secret:OTPAuth.Secret.fromBase32(secret)});
+const totp = (secret,email='TripNexa administrator') => new OTPAuth.TOTP({issuer:'TripNexa',label:email,algorithm:'SHA1',digits:6,period:30,secret:OTPAuth.Secret.fromBase32(secret)});
 export function validCounter(secret,code,last=-1,now=Date.now()) {
   if(typeof code!=='string'||!/^\d{6}$/.test(code))return null;
   const delta=totp(secret).validate({token:code,window:1,timestamp:now});

@@ -9,7 +9,7 @@ async function start() {
     if(!process.env.SMTP_HOST||!urls.application.value||!urls.site.value)throw new Error('Production requires SMTP_HOST and valid HTTPS public site and application URLs.');
   }
   const app = createApp();
-  const server = app.listen(config.port, config.host, () => console.log(`TripSync API: http://${config.host}:${config.port}`));
+  const server = app.listen(config.port, config.host, () => console.log(`TripNexa API: http://${config.host}:${config.port}`));
   const cleanup = setInterval(() => {
     pool.query('DELETE FROM sessions WHERE expires_at<UTC_TIMESTAMP()').catch(() => {});
     pool.query('DELETE FROM auth_tokens WHERE expires_at<UTC_TIMESTAMP()').catch(() => {});

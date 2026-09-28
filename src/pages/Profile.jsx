@@ -37,7 +37,7 @@ export default function Profile() {
               <Compass className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-900" />
             </div>
             <div>
-              <h1 className="font-heading font-black tracking-[-0.03em] text-white text-lg sm:text-2xl leading-none">TripSync.</h1>
+              <h1 className="font-heading font-black tracking-[-0.03em] text-white text-lg sm:text-2xl leading-none">TripNexa.</h1>
               <p className="text-[8px] sm:text-[10px] font-light uppercase tracking-[0.2em] text-white/50 mt-0.5">Personal Travel App</p>
             </div>
           </Link>

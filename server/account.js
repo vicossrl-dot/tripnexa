@@ -30,5 +30,5 @@ accountRouter.post('/export',async(req,res)=>{
   for(const [entity,table]of Object.entries(tables)){const [rows]=await db.execute(`SELECT * FROM ${table} WHERE owner_id=? LIMIT 5001`,[user.id]);assert(rows.length<=5000,413,'Your account needs a larger export. Please contact support.');result.records[entity]=rows.map(row=>{const record=serialize(entity,row);delete record.share_token;return record;});}
   const [attachments]=await db.execute('SELECT item_id,original_name,label,traveler,notes,document_type,expiry_date FROM item_attachments WHERE owner_id=? LIMIT 5001',[user.id]);assert(attachments.length<=5000,413,'Your files need a larger export. Please contact support.');result.records.attachments=attachments;
   const [bookings]=await db.execute('SELECT trip_id,selection_id,item_id,declared_booked,provider FROM affiliate_wallet_links WHERE owner_id=? LIMIT 5001',[user.id]);assert(bookings.length<=5000,413,'Your bookings need a larger export. Please contact support.');result.records.ticketAssociations=bookings;return result;
- });res.set('Content-Disposition','attachment; filename="TripSync-my-data.json"').json(data);
+ });res.set('Content-Disposition','attachment; filename="TripNexa-my-data.json"').json(data);
 });

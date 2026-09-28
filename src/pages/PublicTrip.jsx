@@ -172,7 +172,7 @@ export default function PublicTrip() {
 
       <div className="max-w-2xl mx-auto px-[15px] mt-8">
         <div className="flex items-center justify-center gap-2 text-xs text-white/30">
-          <Compass className="w-3 h-3" /> Shared via TripSync · View-only
+          <Compass className="w-3 h-3" /> Shared via TripNexa · View-only
         </div>
       </div>
     </div>

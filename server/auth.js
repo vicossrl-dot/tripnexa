@@ -45,8 +45,8 @@ export async function issueToken(user, kind) {
   const token = kind === 'verify' ? String(randomInt(100000, 1000000)) : secretToken();
   await pool.execute('INSERT INTO auth_tokens (user_id,kind,token_hash,expires_at,attempts) VALUES (?,?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 15 MINUTE),0) ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash),expires_at=VALUES(expires_at),attempts=0', [user.id, kind, digest(`${user.id}:${kind}:${token}`)]);
   const urls=await getAppUrls();
-  const text = kind === 'verify' ? `Your TripSync verification code: ${token}\nEnter it at ${buildEmailVerificationUrl(urls,user.email)}\nExpires in 15 minutes.` : `Reset your TripSync password: ${buildPasswordResetUrl(urls,token,user.id)}\nExpires in 15 minutes. Ignore this message if you did not request it.`;
-  await sendMail(user.email, kind === 'verify' ? 'Verify your TripSync email' : 'Reset your TripSync password', text);
+  const text = kind === 'verify' ? `Your TripNexa verification code: ${token}\nEnter it at ${buildEmailVerificationUrl(urls,user.email)}\nExpires in 15 minutes.` : `Reset your TripNexa password: ${buildPasswordResetUrl(urls,token,user.id)}\nExpires in 15 minutes. Ignore this message if you did not request it.`;
+  await sendMail(user.email, kind === 'verify' ? 'Verify your TripNexa email' : 'Reset your TripNexa password', text);
 }
 export const authRouter = Router();
 const authLimit = rateLimit({ windowMs: 15 * 60000, limit: () => Math.min(30,runtimeSettings()?.settings.login_attempt_limit||30), standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many attempts. Please try again in 15 minutes.' } });

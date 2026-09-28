@@ -7,7 +7,7 @@ export function useCapabilities() {
     const refresh = () => api.config().then(value => {
       if (active) setCapabilities({ ...value, loading: false, error: '' });
     }).catch(() => {
-      if (active) setCapabilities(previous => ({ ...previous, loading: false, error: 'Cannot contact the backend. Check that TripSync is running; configuration will retry automatically.' }));
+      if (active) setCapabilities(previous => ({ ...previous, loading: false, error: 'Cannot contact the backend. Check that TripNexa is running; configuration will retry automatically.' }));
     });
     refresh();
     const timer = setInterval(refresh, 30000);

@@ -21,7 +21,7 @@ export default function PassportStamp({ date }) {
         <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeWidth="3" />
         <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" strokeWidth="1.5" />
         <text fill="currentColor" fontSize="11" fontWeight="800" letterSpacing="3" fontFamily="var(--font-heading)">
-          <textPath href="#stamp-arc-top" startOffset="50%" textAnchor="middle">TRIPSYNC</textPath>
+          <textPath href="#stamp-arc-top" startOffset="50%" textAnchor="middle">TRIPNEXA</textPath>
         </text>
         <text fill="currentColor" fontSize="9" fontWeight="700" letterSpacing="2" fontFamily="var(--font-heading)">
           <textPath href="#stamp-arc-bottom" startOffset="50%" textAnchor="middle">✈ ✈ ✈</textPath>

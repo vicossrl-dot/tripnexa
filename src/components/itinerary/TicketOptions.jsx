@@ -32,7 +32,7 @@ export default function TicketOptions({item,trip,publicToken=null,onBooking=unde
    <p className="text-xs text-white/60">{data.disclosure} {data.disclosure_url&&<a className="underline" href={data.disclosure_url} target="_blank" rel="noopener noreferrer">Affiliate disclosure</a>}</p>
    {!publicToken&&<div className="border-t border-white/15 pt-4 space-y-3"><h4 className="font-semibold">Already booked?</h4><button disabled={busy} className="trip-button secondary w-full" onClick={addTicket}>Add your ticket to Travel Wallet</button>
     <label className="block text-sm">Booked with (optional)<select className="block w-full bg-neutral-900 border border-white/20 rounded-lg p-3 mt-1" value={provider} onChange={e=>setProvider(e.target.value)}>{[['other','Other'],['getyourguide','GetYourGuide'],['viator','Viator'],['tiqets','Tiqets'],['klook','Klook']].map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
-    {(!booked||data.booking?.declared)&&<button disabled={busy} className="trip-button secondary w-full" onClick={()=>mark(!data.booking?.declared)}>{data.booking?.declared?'Remove my booked mark':'Mark as booked'}</button>}<p className="text-xs text-white/50">This records your declaration. TripSync does not verify purchases.</p>
+    {(!booked||data.booking?.declared)&&<button disabled={busy} className="trip-button secondary w-full" onClick={()=>mark(!data.booking?.declared)}>{data.booking?.declared?'Remove my booked mark':'Mark as booked'}</button>}<p className="text-xs text-white/50">This records your declaration. TripNexa does not verify purchases.</p>
    </div>}
    <button className="trip-button secondary" onClick={()=>setOpen(false)}>Close</button>
   </DialogContent></Dialog>

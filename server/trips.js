@@ -94,4 +94,4 @@ tripRouter.post('/:id/itinerary', itineraryLimit, async (req, res) => res.json(a
 tripRouter.post('/:id/itinerary/edit', async (req, res) => res.json(await editItinerary(req.params.id, req.user.id, req.body || {})));
 tripRouter.post('/:id/itinerary/preview', itineraryLimit, async(req,res)=>res.json(await previewChanges(req.params.id,req.user.id,req.body||{})));
 tripRouter.post('/:id/itinerary/apply',async(req,res)=>res.json(await applyChanges(req.params.id,req.user.id,req.body?.token)));
-tripRouter.get('/:id/itinerary/pdf',itineraryLimit,async(req,res)=>res.set({'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="TripSync-itinerary.pdf"','Cache-Control':'no-store'}).send(await exportItineraryPdf(req.params.id,req.user.id)));
+tripRouter.get('/:id/itinerary/pdf',itineraryLimit,async(req,res)=>res.set({'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="TripNexa-itinerary.pdf"','Cache-Control':'no-store'}).send(await exportItineraryPdf(req.params.id,req.user.id)));

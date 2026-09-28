@@ -188,7 +188,7 @@ export default function StepPreferences({ trip, update, dayWindows, onWindowsCha
       </section>
       <section className="space-y-3">
         <label htmlFor="special-wishes" className="block text-sm font-semibold text-white/80 uppercase tracking-wider">Special wishes</label>
-        <p className="text-sm text-white/60">Anything else TripSync should consider when suggesting places or building your itinerary?</p>
+        <p className="text-sm text-white/60">Anything else TripNexa should consider when suggesting places or building your itinerary?</p>
         <textarea id="special-wishes" maxLength={4000} rows={5} value={trip.special_wishes || ''} onChange={event => update('special_wishes', event.target.value)} placeholder="Keep one afternoon completely free. Avoid early mornings. Prefer local restaurants." className="w-full rounded-xl border border-white/20 bg-white/5 p-3 text-white" />
         <p className="text-xs text-white/50">Saved with your preferences. Flights, confirmed reservations and accessibility needs remain protected.</p>
       </section>

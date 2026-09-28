@@ -12,7 +12,7 @@ export function TripNavigation({ trip, beforeNavigate = null, onUpdated = null, 
   return <header className="trip-navigation">
     <div className="trip-container">
       <div className="flex items-center justify-between gap-4 py-3">
-        <Link to="/?trips=1" onClick={event=>go(event,'/?trips=1')} className="flex items-center gap-2 shrink-0" aria-label="TripSync · Back to trips"><span className="rounded-xl bg-lime text-neutral-950 p-2"><Compass size={19}/></span><span className="font-heading font-black text-xl tracking-tight">TripSync.</span></Link>
+        <Link to="/?trips=1" onClick={event=>go(event,'/?trips=1')} className="flex items-center gap-2 shrink-0" aria-label="TripNexa · Back to trips"><span className="rounded-xl bg-lime text-neutral-950 p-2"><Compass size={19}/></span><span className="font-heading font-black text-xl tracking-tight">TripNexa.</span></Link>
         <p className="hidden sm:block truncate text-sm text-white/60">{trip.name}</p>
         <div className="flex flex-wrap justify-end gap-2"><Link to="/?trips=1" onClick={event=>go(event,'/?trips=1')} className="trip-button secondary">Trips</Link><button className="trip-button secondary" onClick={async()=>{try{await beforeNavigate?.();setShare(true);}catch(failure){setError(failure.message);}}}><Share2 size={15}/>Share</button>{actions}</div>
       </div>

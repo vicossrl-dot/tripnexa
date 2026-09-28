@@ -14,7 +14,7 @@ export async function smtpConfiguration(overrides={}){
  const settings=runtimeSettings()?.settings||{},host=settings.smtp_host||process.env.SMTP_HOST||'';
  return{host,port:Number(settings.smtp_host?settings.smtp_port:process.env.SMTP_PORT||587),secure:settings.smtp_host?settings.smtp_secure:process.env.SMTP_SECURE==='true',
   user:overrides.SMTP_USER??await credential('SMTP_USER',process.env.SMTP_USER||''),password:overrides.SMTP_PASSWORD??await credential('SMTP_PASSWORD',process.env.SMTP_PASSWORD||''),
-  from:settings.smtp_from_email?{name:settings.smtp_from_name,address:settings.smtp_from_email}:process.env.SMTP_FROM||'TripSync <noreply@localhost>'};
+  from:settings.smtp_from_email?{name:settings.smtp_from_name,address:settings.smtp_from_email}:process.env.SMTP_FROM||'TripNexa <noreply@localhost>'};
 }
 export function smtpTransport(settings){return nodemailer.createTransport({host:settings.host,port:settings.port,secure:settings.secure,requireTLS:config.production&&!settings.secure,connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000,...(settings.user?{auth:{user:settings.user,pass:settings.password}}:{})});}
 export async function checkProvider(provider,overrides={}){
@@ -55,5 +55,5 @@ providersRouter.post('/providers/:provider/check',requireSuperAdmin,requireRecen
 providersRouter.get('/email/status',async(req,res)=>{const settings=await smtpConfiguration();const [events]=await pool.query('SELECT id,template,status,error_code,created_at FROM email_events ORDER BY created_at DESC LIMIT 100');res.json({configured:!!settings.host,mode:settings.host?'smtp':config.production?'unconfigured':'development outbox',events});});
 providersRouter.post('/email/test',requireSuperAdmin,requireRecentAuth,limit,async(req,res)=>{
  const reason=actionReason(req.body,'SEND');assert(req.user.email_verified,403,'Verify your email first.');const settings=await smtpConfiguration();assert(settings.host,409,'Configure SMTP before sending a test.');
- await sendMail(req.user.email,'TripSync administration test','This is a test requested by the verified account owner.','admin_test',req.user.id);await auditRequest(req,{action:'email.test',targetType:'user',targetId:req.user.id,reason});res.json({ok:true,sentTo:'Your verified account email'});
+ await sendMail(req.user.email,'TripNexa administration test','This is a test requested by the verified account owner.','admin_test',req.user.id);await auditRequest(req,{action:'email.test',targetType:'user',targetId:req.user.id,reason});res.json({ok:true,sentTo:'Your verified account email'});
 });

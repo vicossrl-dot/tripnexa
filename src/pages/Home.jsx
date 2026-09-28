@@ -74,7 +74,7 @@ export default function Home() {
               <Compass className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-900" />
             </div>
             <div>
-              <h1 className="font-heading font-black tracking-[-0.03em] text-white text-lg sm:text-2xl leading-none">TripSync.</h1>
+              <h1 className="font-heading font-black tracking-[-0.03em] text-white text-lg sm:text-2xl leading-none">TripNexa.</h1>
               <p className="font-mono text-[13px] font-light uppercase tracking-[0.05em] text-white/70 mt-0.5 whitespace-nowrap">Personal Travel App</p>
             </div>
           </Link>

@@ -93,7 +93,7 @@ export const api = {
   downloadItinerary: async id => {
     const response=await fetch(`/api/trips/${encodeURIComponent(id)}/itinerary/pdf`,{credentials:'same-origin'});
     if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error || 'PDF export failed. Please retry.');}
-    const url=URL.createObjectURL(await response.blob()),link=document.createElement('a');link.href=url;link.download='TripSync-itinerary.pdf';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    const url=URL.createObjectURL(await response.blob()),link=document.createElement('a');link.href=url;link.download='TripNexa-itinerary.pdf';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
   },
   savePlanning: (id, collection, items) => request(`/trips/${encodeURIComponent(id)}/planning/${collection}`, { method: 'PUT', body: { items } }),
   config: () => request('/config'),
