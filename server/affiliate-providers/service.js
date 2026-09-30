@@ -7,7 +7,7 @@ import {readSettings} from '../admin/settings.js';
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
 export async function providers(){
  const [rows]=await pool.query('SELECT * FROM affiliate_providers');
- return definitions.map((def,i)=>{const row=rows.find(r=>r.provider===def.id);return {...def,config:{enabled:false,display_name:def.name,order:i+1,partner_id:'',language:'en',currency:'EUR',search_template:'',allowed_hosts:def.hosts,cache_ttl:300,fallback:'search',...(row?parse(row.config):{})},version:row?.version||0,last_check:row?.last_check?parse(row.last_check):null,checked_at:row?.checked_at||null};});
+ return definitions.map((def,i)=>{const row=rows.find(r=>r.provider===def.id);return {...def,config:{enabled:false,display_name:def.name,order:i+1,partner_id:'',aff_adid:'',language:'en',currency:'EUR',search_template:'',allowed_hosts:def.hosts,cache_ttl:300,fallback:'search',...(row?parse(row.config):{})},version:row?.version||0,last_check:row?.last_check?parse(row.last_check):null,checked_at:row?.checked_at||null};});
 }
 export async function visitContext(tripId,visitId,ownerId,db=pool){
  const trip=await owned(db,'Trip',tripId,ownerId);

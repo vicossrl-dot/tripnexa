@@ -18,6 +18,27 @@ test('Complete structured search encodes attraction and destination but never mo
  assert.throws(()=>p.validateAffiliateUrl('https://www.viator.com/?pid=a&mcid=1&medium=link&sig=x&q={query}',true));
  assert.equal(p.buildAffiliateSearchLink({canonical_place_name:'Ambiguous'}),null);
 });
+test('Klook link-only fallback automatically searches by attraction and city',async()=>{
+ const p=adapter('klook',{
+  enabled:true,
+  partner_id:'137252',
+  aff_adid:'1468594',
+  allowed_hosts:['klook.com','www.klook.com','affiliate.klook.com'],
+  fallback:'search'
+ });
+ const result=await p.resolvePlace({canonical_place_name:'Louvre Museum',city:'Paris'},[]);
+ assert.equal(result.confidence,'SEARCH_FALLBACK');
+ const outer=new URL(result.url);
+ assert.equal(outer.hostname,'affiliate.klook.com');
+ assert.equal(outer.searchParams.get('aid'),'137252');
+ assert.equal(outer.searchParams.get('aff_adid'),'1468594');
+ const target=new URL(outer.searchParams.get('k_site'));
+ assert.equal(target.hostname,'www.klook.com');
+ assert.equal(target.pathname,'/en-US/search/result/');
+ assert.equal(target.searchParams.get('query'),'Louvre Museum Paris');
+ assert.equal(target.searchParams.get('search_scope'),'main_search');
+ assert.equal((await p.testIntegration()).ok,true);
+});
 test('Ticketability uses category clues and explicit overrides without assuming tickets are required',()=>{
  for(const category of ['tourist_attraction','museum','monument','theme_park','art_gallery','experience'])assert(ticketable({category}));
  for(const category of ['park','restaurant','hotel','airport','street','neighborhood',''])assert(!ticketable({category}));

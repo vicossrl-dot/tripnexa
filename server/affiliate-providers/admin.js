@@ -17,12 +17,12 @@ affiliateAdminRouter.get('/providers',async(req,res)=>{
 affiliateAdminRouter.put('/providers/:provider',requireSuperAdmin,requireRecentAuth,async(req,res)=>{
  const def=definitions.find(p=>p.id===req.params.provider);assert(def,404,'Provider not found.');const reason=actionReason(req.body,'SAVE');const c=req.body.config;
  assert(c&&typeof c.enabled==='boolean'&&validText(c.display_name,60)&&c.display_name.trim()&&Number.isInteger(c.order)&&c.order>=1&&c.order<=99,400,'Check provider name and order.');
- assert(validText(c.partner_id)&&/^[a-z]{2}(?:-[A-Z]{2})?$/.test(c.language)&&/^[A-Z]{3}$/.test(c.currency),400,'Check account identifier, language and currency.');
+ assert(validText(c.partner_id)&&validText(c.aff_adid||'')&&/^[a-z]{2}(?:-[A-Z]{2})?$/.test(c.language)&&/^[A-Z]{3}$/.test(c.currency),400,'Check account identifier, language and currency.');
  assert(Array.isArray(c.allowed_hosts)&&c.allowed_hosts.length>0&&c.allowed_hosts.length<=20&&c.allowed_hosts.every(h=>typeof h==='string'&&h.length<=253&&/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/.test(h)&&(h===def.root||h.endsWith('.'+def.root))),400,'Only explicit official provider domains can be allowed.');
  assert(Number.isInteger(c.cache_ttl)&&c.cache_ttl>=60&&c.cache_ttl<=86400&&['search','none'].includes(c.fallback),400,'Check cache and fallback settings.');
  assert(typeof c.search_template==='string',400,'Enter the official search link template.');
  if(c.search_template){assert(req.body.official_link_confirmed===true,400,'Confirm this link format was supplied by the provider.');assert(c.search_template.includes('{query}'),400,'Include {query} for the complete attraction and destination.');adapter(def.id,c).validateAffiliateUrl(c.search_template,true);}
- const config=Object.fromEntries(['enabled','display_name','order','partner_id','language','currency','allowed_hosts','cache_ttl','fallback','search_template'].map(k=>[k,c[k]]));
+ const config=Object.fromEntries(['enabled','display_name','order','partner_id','aff_adid','language','currency','allowed_hosts','cache_ttl','fallback','search_template'].map(k=>[k,c[k]]));
  await transaction(async db=>{await db.query("SELECT name FROM admin_locks WHERE name='privileged_accounts' FOR UPDATE");const [[row]]=await db.execute('SELECT version FROM affiliate_providers WHERE provider=? FOR UPDATE',[def.id]);assert(Number(req.body.version)===(row?.version||0),409,'Provider changed. Reload before saving.');
  await db.execute('INSERT INTO affiliate_providers(provider,config,version,updated_by)VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE config=VALUES(config),version=VALUES(version),updated_by=VALUES(updated_by),last_check=NULL,checked_at=NULL',[def.id,JSON.stringify(config),(row?.version||0)+1,req.user.id]);await auditRequest(req,{action:'affiliate.provider.save',targetType:'affiliate',targetId:def.id,reason,metadata:{provider:def.id,version:(row?.version||0)+1}},db);});res.json({ok:true});
 });
