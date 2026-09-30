@@ -1,4 +1,4 @@
-import {Router} from 'express';
+﻿import {Router} from 'express';
 import {randomUUID} from 'node:crypto';
 import {pool,transaction} from '../db.js';
 import {assert} from '../errors.js';
@@ -12,7 +12,7 @@ affiliateAdminRouter.get('/providers',async(req,res)=>{
  const [counts]=await pool.query('SELECT provider,COUNT(*) AS total FROM affiliate_place_mappings WHERE enabled=TRUE GROUP BY provider');
  const [clicks]=await pool.query('SELECT provider,COUNT(*) AS total FROM affiliate_click_events WHERE created_at>=UTC_DATE() GROUP BY provider');
  const [secrets]=await pool.query("SELECT secret_name FROM managed_secrets WHERE provider IN ('getyourguide','viator','tiqets')");
- res.json({providers:(await providers()).map(p=>({...p,status:p.config.enabled&&p.last_check?.ok===false?'ERROR':adapter(p.id,p.config).getStatus(counts.find(c=>c.provider===p.id)?.total||0),mappings:counts.find(c=>c.provider===p.id)?.total||0,clicks_today:clicks.find(c=>c.provider===p.id)?.total||0,api_status:'Not configured',credential_configured:!!p.secret&&secrets.some(s=>s.secret_name===p.secret)}))});
+ res.json({providers:(await providers()).map(p=>({...p,status:p.config.enabled&&p.last_check?.ok===false?'ERROR':adapter(p.id,p.config).getStatus(counts.find(c=>c.provider===p.id)?.total||0,!!p.secret&&secrets.some(s=>s.secret_name===p.secret)),mappings:counts.find(c=>c.provider===p.id)?.total||0,clicks_today:clicks.find(c=>c.provider===p.id)?.total||0,api_status:'Not configured',credential_configured:!!p.secret&&secrets.some(s=>s.secret_name===p.secret)}))});
 });
 affiliateAdminRouter.put('/providers/:provider',requireSuperAdmin,requireRecentAuth,async(req,res)=>{
  const def=definitions.find(p=>p.id===req.params.provider);assert(def,404,'Provider not found.');const reason=actionReason(req.body,'SAVE');const c=req.body.config;
@@ -52,3 +52,4 @@ affiliateAdminRouter.get('/analytics',async(req,res)=>{
  const groups={};for(const field of ['provider','city','attraction','mapping_type']){const [rows]=await pool.query(`SELECT ${field} AS label,COUNT(*) AS clicks FROM affiliate_click_events GROUP BY ${field} ORDER BY clicks DESC LIMIT 50`);groups[field]=rows;}
  res.json({totals,groups,sales:null,revenue:null,conversions:null,note:'Clicks are outbound intentions, not verified bookings. Sales and revenue: N/A until official reporting is connected.'});
 });
+

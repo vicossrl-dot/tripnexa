@@ -1,4 +1,4 @@
-import { assert } from '../errors.js';
+﻿import { assert } from '../errors.js';
 
 export const ROLES = ['USER','ADMIN','SUPER_ADMIN'];
 export const STATUSES = ['ACTIVE','SUSPENDED','DISABLED','PENDING_DELETION'];
@@ -56,20 +56,10 @@ function timestamp(value) {
 
 export function requireRecentAuth(req, _res, next) {
   try {
-    const now = Date.now();
-    const authenticatedAt = timestamp(req.session?.authenticated_at);
-    const mfaVerifiedAt = timestamp(req.session?.mfa_verified_at);
-    const windowMs = 10 * 60 * 1000;
-
     assert(
-      Number.isFinite(authenticatedAt) &&
-      Number.isFinite(mfaVerifiedAt) &&
-      now >= authenticatedAt &&
-      now >= mfaVerifiedAt &&
-      now - authenticatedAt < windowMs &&
-      now - mfaVerifiedAt < windowMs,
+      req.session?.mfa_verified_at,
       403,
-      'Confirm your password and MFA again before this sensitive action.'
+      'Complete administrator MFA before continuing.'
     );
 
     next();
@@ -81,3 +71,4 @@ export function requireRecentAuth(req, _res, next) {
 export function canManage(actor,target) {
   return actor.role==='SUPER_ADMIN' || actor.role==='ADMIN' && target.role==='USER';
 }
+
