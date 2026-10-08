@@ -1,9 +1,12 @@
+import { t, translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import { useEffect, useRef, useState, useId } from 'react';
 import { Input } from '@/components/ui/input';
 import { api } from '@/api/client';
 import { useCapabilities } from '@/hooks/use-capabilities';
 
 export default function DestinationAutocomplete({ value, onChange, onSelect, onBusy = (_busy) => {}, purpose = 'destination', latitude = null, longitude = null, id = '', label = '', dark = false, light = false, kind = '', destination = '', keepSelection = false, addressField = false }) {
+  useLocale();
   const isPlace = purpose === 'place';
   const inputId = id || (isPlace ? 'desired-place-search' : 'trip-destination');
   const darkStyle = !light && (dark || isPlace);
@@ -47,7 +50,7 @@ export default function DestinationAutocomplete({ value, onChange, onSelect, onB
       if (requestRevision === revision.current) {
         selectedText.current = isPlace ? (keepSelection ? (addressField ? details.address : details.name) : '') : details.destination;
         onSelect(details);
-        setMessage(isPlace ? (keepSelection ? 'Place selected. You can also edit it manually.' : 'Place selected. Search again to add another.') : details.timezone ? 'Destination and timezone selected.' : 'Destination selected. You can set the timezone during planning.');
+        setMessage(isPlace ? (keepSelection ? 'Place selected. You can also edit it manually.' : 'Place selected. Search again to add another.') : details.timezone ? 'Destination and timezone selected.' : 'Destination selected. Times in your plan are local to your destination.');
       }
     } catch (error) {
       if (requestRevision === revision.current && error.name !== 'AbortError') setMessage(error.message + ' Keep typing to enter it manually.');
@@ -57,11 +60,11 @@ export default function DestinationAutocomplete({ value, onChange, onSelect, onB
   }
   const expanded = focused && suggestions.length > 0;
   return <div className="relative space-y-1.5">
-    <label htmlFor={inputId} className={darkStyle ? 'text-sm text-white/60' : 'font-mono text-[11px] uppercase tracking-[0.15em] text-neutral-500'}>{label || (isPlace ? 'Search a desired place' : 'Destination')}</label>
+    <label htmlFor={inputId} className={darkStyle ? 'text-sm text-white/60' : 'font-mono text-[11px] uppercase tracking-[0.15em] text-neutral-500'}>{label || (isPlace ? t("ui.search.a.desired.place.83f00d6") : t("ui.destination.293d404"))}</label>
     <Input id={inputId} role="combobox" aria-autocomplete="list" aria-expanded={expanded} aria-controls={listId}
       aria-activedescendant={expanded && active >= 0 ? `${listId}-${active}` : undefined}
       aria-describedby={`${listId}-status`} autoComplete="off" maxLength={200} value={value}
-      placeholder={isPlace ? 'Search by name or address' : 'e.g. Japan · Tokyo · Kyoto'} className={darkStyle ? 'h-11 bg-white/5 border-white/10 text-white' : 'h-11 rounded-xl'} onFocus={() => setFocused(true)}
+      placeholder={isPlace ? t("ui.search.by.name.or.address.93ee6c2") : t("ui.e.g.japan.tokyo.kyoto.43a4e51")} className={darkStyle ? 'h-11 bg-white/5 border-white/10 text-white' : 'h-11 rounded-xl'} onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       onChange={event => {
         revision.current++; detailsController.current?.abort(); selectedText.current = '';
@@ -74,16 +77,16 @@ export default function DestinationAutocomplete({ value, onChange, onSelect, onB
         if (event.key === 'Enter' && active >= 0) { event.preventDefault(); choose(suggestions[active]); }
       }} />
     {expanded && <div className="absolute top-full inset-x-0 z-50 rounded-xl border bg-white shadow-xl overflow-hidden">
-      <ul id={listId} role="listbox" aria-label={isPlace ? 'Place suggestions' : 'Destination suggestions'}>
+      <ul id={listId} role="listbox" aria-label={isPlace ? t("ui.place.suggestions.0338b38") : t("ui.destination.suggestions.bd59d59")}>
         {suggestions.map((item, index) => <li key={item.place_id} id={`${listId}-${index}`} role="option" aria-selected={index === active}
           className={`px-3 py-2.5 text-sm text-neutral-900 cursor-pointer ${index === active ? 'bg-lime/30' : 'hover:bg-neutral-100'}`}
           onMouseDown={event => event.preventDefault()} onMouseEnter={() => setActive(index)} onClick={() => choose(item)}>{item.description}</li>)}
       </ul>
-      <div className="border-t px-3 py-2 text-xs font-normal text-[#5e5e5e] whitespace-nowrap" translate="no">Google Maps</div>
+      <div className="border-t px-3 py-2 text-xs font-normal text-[#5e5e5e] whitespace-nowrap" translate="no">{t("ui.google.maps.2923740")}</div>
     </div>}
     <p id={`${listId}-status`} role="status" className={darkStyle ? 'text-xs text-white/50' : 'text-xs text-neutral-500'}>
-      {resolving ? 'Loading place details…' : searching ? 'Searching places…' : (isPlace ? message.replaceAll('destination', 'place') : message) || configError || (!configuring && !places ? 'Suggestions are not configured. Manual entry is available.' : (isPlace ? 'Choose a Google suggestion or type the place manually.' : 'Choose a suggestion or enter your destination manually.'))}
+      {resolving ? t("ui.loading.place.details.a16a6c9") : searching ? t("ui.searching.places.3ac49ab") : (isPlace ? message.replaceAll("destination", "place") : message) || translateText(configError) || (!configuring && !places ? t("ui.suggestions.are.not.configured.manual.entry.is.available.4feeaa7") : (isPlace ? t("ui.choose.a.google.suggestion.or.type.the.place.manually.b93fdb9") : t("ui.choose.a.suggestion.or.enter.your.destination.manually.f4af95f")))}
     </p>
-    {selectedText.current && <p className="text-xs font-normal text-[#5e5e5e] whitespace-nowrap" translate="no">Google Maps</p>}
+    {selectedText.current && <p className="text-xs font-normal text-[#5e5e5e] whitespace-nowrap" translate="no">{t("ui.google.maps.2923740")}</p>}
   </div>;
 }

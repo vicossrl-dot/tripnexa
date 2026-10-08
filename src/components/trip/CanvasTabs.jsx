@@ -1,3 +1,5 @@
+import { translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 import { motion } from "framer-motion";
 
@@ -9,6 +11,7 @@ const TABS = [
 ];
 
 export default function CanvasTabs({ active, onChange }) {
+  useLocale();
   return (
     <div className="mb-5 lg:mb-[33px] inline-flex bg-white/10 backdrop-blur rounded-full p-1">
       {TABS.map((t) => (
@@ -22,7 +25,7 @@ export default function CanvasTabs({ active, onChange }) {
           {active === t.key && (
             <motion.span layoutId="canvas-tab-pill" className="absolute inset-0 bg-lime rounded-full" transition={{ type: "spring", stiffness: 500, damping: 40 }} />
           )}
-          <span className="relative">{t.label}</span>
+          <span className="relative">{translateText(t.label)}</span>
         </button>
       ))}
     </div>

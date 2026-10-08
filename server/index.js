@@ -3,6 +3,7 @@ import { config } from './config.js';
 import { pool } from './db.js';
 import { cleanupWalletFiles } from './file-lifecycle.js';
 import {getAppUrls} from './app-urls.js';
+import {drainPublicItineraryJobs} from './public-itineraries/service.js';
 async function start() {
   if (config.production) {
     const urls=await getAppUrls();
@@ -18,8 +19,11 @@ async function start() {
     cleanupWalletFiles().catch(error => console.error('Wallet cleanup retry:', error.code || error.name));
   }, 3600000);
   cleanup.unref();
+  const publicRefresh=setInterval(()=>{drainPublicItineraryJobs().catch(()=>console.error('Public itinerary worker unavailable. Run the additive migrations.'));},10000);
+  publicRefresh.unref();
   for (const signal of ['SIGINT','SIGTERM']) process.on(signal, () => {
     clearInterval(cleanup);
+    clearInterval(publicRefresh);
     server.close(async () => { await pool.end(); process.exit(0); });
   });
 }

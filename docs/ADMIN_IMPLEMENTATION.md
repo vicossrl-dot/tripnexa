@@ -1,5 +1,7 @@
 # Implementarea TripSync Admin — în curs
 
+Actualizare monetizare: `/admin/billing` adaugă planuri, comenzi, abonamente, credite, audit, webhook retry, reconciliere Stripe și setări versionate. Implementarea și verificările locale sunt în [BILLING_REPORT.md](BILLING_REPORT.md); configurarea externă Stripe/PayPal și staging-ul rămân necesare. Această etapă nu finalizează placeholder-ele administrative enumerate mai jos.
+
 ## Revenue — Tours & Tickets, 25 septembrie 2026
 
 Conectate Tours & Tickets, Referral Links (mapări globale exacte) și Affiliate Analytics. Patru adaptoare link-only: GetYourGuide, Viator, Tiqets și Klook; configurare versionată SUPER_ADMIN, mapări și validări ADMIN, allowlist HTTPS, audit, disclosure și statistici de clicuri fără venituri inventate. Secretelor existente li se adaugă sloturi criptate opționale pentru viitoare API-uri GYG/Viator/Tiqets; simpla salvare nu conectează API-ul. Migrarea este aplicată local, furnizorii reali sunt dezactivați și neconfigurați. Secțiunea Referral Links nu mai este placeholder; Maintenance, Jobs, Support și Data Inspector rămân în lucru. [Configurare și verificări](AFFILIATE_TICKETS.md).
@@ -51,3 +53,9 @@ Connected Accounts în profil, identificatori stabili provider/subject, legare c
 Migrarea aditivă este aplicată local. Valorile de producție intenționate nu au fost activate; conturile și credențialele reale nu au fost schimbate. Typecheck, lint, 71 teste unitare/HTTP, 37 teste MySQL, build și regresiile Chrome trec. Capturile noi sunt în `.local/social-verification/`. Google și Apple nu au credențiale OAuth configurate; testele lor folosesc identități fictive semnate, iar loginul real rămâne de verificat. Detalii: `SOCIAL_AUTH.md` și `DOMAIN_CONFIGURATION.md`.
 
 Referral Links/Tours & Tickets au fost între timp implementate conform `AFFILIATE_TICKETS.md`. Maintenance, Jobs, Support și Data Inspector nu sunt declarate finalizate de această etapă.
+
+## Continuare ? Storage & CDN / Bunny
+
+Ad?ugat? pagina /admin/storage cu set?ri versionate, parol? criptat? write-only, statut, statistici SQL ?i test explicit upload/read/checksum/delete. Configurarea folose?te permisiunile, MFA ?i auditul existente. Fi?ierele private r?m?n accesibile numai prin aplica?ie; granturile excep?ionale p?streaz? aprobarea independent? ?i revocarea. Furnizorul se salveaz? per fi?ier, astfel ?nc?t fi?ierele locale existente r?m?n lizibile dup? activarea Bunny.
+
+Migrarea aditiv? pentru storage a fost verificat? numai ?n baze MySQL/MariaDB de test. Nu s-au mutat fi?iere reale ?n Bunny ?i nu s-a executat deploy. Creden?ialele Bunny ?i URL-ul public complet pentru intro lipsesc; testele remote sunt simulate. Raportul UX, capturile ?i verific?rile sunt descrise ?n [UX_STORAGE_REPORT.md](UX_STORAGE_REPORT.md), iar configurarea ?i migrarea op?ional? ?n [BUNNY_STORAGE.md](BUNNY_STORAGE.md). Billing-ul existent a fost p?strat ?i retestat.

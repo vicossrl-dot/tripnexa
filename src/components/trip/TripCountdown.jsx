@@ -1,6 +1,9 @@
+import { useLocale } from "@/i18n/react";
+import { translateText } from "@/i18n/runtime";
 import React, { useState, useEffect } from "react";
 
 export default function TripCountdown({ target, dark = false }) {
+  useLocale();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export default function TripCountdown({ target, dark = false }) {
           {i > 0 && <span className={`font-heading text-xl -mt-4 ${dark ? "text-neutral-300" : "text-white/40"}`}>:</span>}
           <div className="text-center">
             <span className={`font-heading font-medium text-3xl sm:text-4xl tabular-nums leading-none ${dark ? "text-neutral-900" : "text-white"}`}>{u.v}</span>
-            <p className={`mt-1 text-[13px] font-light uppercase tracking-[0.25em] ${dark ? "text-neutral-600" : "text-white"}`}>{u.l}</p>
+            <p className={`mt-1 text-[13px] font-light uppercase tracking-[0.25em] ${dark ? "text-neutral-600" : "text-white"}`}>{translateText(u.l)}</p>
           </div>
         </React.Fragment>
       ))}

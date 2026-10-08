@@ -21,7 +21,7 @@ try{
  for(const [i,p] of definitions.entries()){
   const cfg={enabled:true,display_name:p.name,order:i+1,partner_id:'TEST_ONLY',language:'en',currency:'EUR',search_template:'',allowed_hosts:p.hosts,cache_ttl:300,fallback:'none'};
   await pool.execute('INSERT INTO affiliate_providers(provider,config)VALUES(?,?) ON DUPLICATE KEY UPDATE config=VALUES(config)',[p.id,JSON.stringify(cfg)]);
-  const tracking=p.id==='getyourguide'?'partner_id=TEST_ONLY':p.id==='viator'?'pid=PTEST&mcid=123&medium=link':'affiliate_fixture=TEST_ONLY';
+  const tracking=p.id==='getyourguide'?'partner_id=TEST_ONLY':p.id==='viator'?'pid=PTEST&mcid=123&medium=link':p.id==='klook'?'aid=12345&aff_adid=67890':'affiliate_fixture=TEST_ONLY';
   await pool.execute('INSERT INTO affiliate_place_mappings(id,provider,google_place_id,canonical_place_name,city,country,affiliate_url,created_by)VALUES(?,?,?,?,?,?,?,?)',[randomUUID(),p.id,placeId,'Sagrada Familia','Barcelona','Spain','https://www.'+p.root+'/fixture-attraction?'+tracking,admin]);
  }
  browser=await openBrowser(output);const {evaluate,command,click,input,text,wait,screenshot}=browser;

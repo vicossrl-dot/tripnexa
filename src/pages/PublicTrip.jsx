@@ -1,12 +1,16 @@
+import { t, translateText, formatAppDate } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState, useEffect } from "react";
 import TicketOptions from '@/components/itinerary/TicketOptions';
 import { useParams } from "react-router-dom";
 import { api } from "@/api/client";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { Compass, Clock, MapPin, AlertCircle, ExternalLink, Footprints, Navigation } from "lucide-react";
 import { buildMapsLink, STATUS_LABELS } from "@/lib/planningEngine";
+import LanguageButton from '@/components/LanguageButton';
 
 export default function PublicTrip() {
+  const locale=useLocale();
   const { token } = useParams();
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -23,7 +27,7 @@ export default function PublicTrip() {
       })
       .catch((e) => setError(e.message || "Failed to load trip"))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token,locale]);
 
   if (loading) {
     return (
@@ -38,9 +42,9 @@ export default function PublicTrip() {
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-6">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-white/30 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-white mb-2">Trip not available</h1>
-          <p className="text-white/50 text-sm">{error}</p>
-          <p className="text-white/30 text-xs mt-4">The owner may have disabled sharing or the link is invalid.</p>
+          <h1 className="text-xl font-bold text-white mb-2">{t("ui.trip.not.available.b8fbb6e")}</h1>
+          <p className="text-white/50 text-sm">{translateText(error)}</p>
+          <p className="text-white/30 text-xs mt-4">{t("ui.the.owner.may.have.disabled.sharing.or.the.link.is.invalid.85babaa")}</p>
         </div>
       </div>
     );
@@ -73,12 +77,13 @@ export default function PublicTrip() {
             )}
           </div>
           <span className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full ${trip.plan_status === "ready" || trip.plan_status === "completed" ? "bg-lime/20 text-lime" : "bg-amber-500/20 text-amber-300"}`}>
-            {STATUS_LABELS[trip.plan_status] || "Draft"}
+            {translateText(STATUS_LABELS[trip.plan_status]) || t("ui.draft.ebf12ef")}
           </span>
+          <LanguageButton/>
         </div>
         <div className="px-[15px] pb-2 flex items-center gap-3 text-xs text-white/40">
           {trip.start_date && trip.end_date && (
-            <span>{format(parseISO(trip.start_date), "d MMM")} – {format(parseISO(trip.end_date), "d MMM, yyyy")}</span>
+            <span>{formatAppDate(parseISO(trip.start_date), "d MMM")} – {formatAppDate(parseISO(trip.end_date), "d MMM, yyyy")}</span>
           )}
           {trip.timezone && <span>· {trip.timezone}</span>}
         </div>
@@ -89,7 +94,7 @@ export default function PublicTrip() {
         {dates.length === 0 ? (
           <div className="text-center py-16 text-white/40">
             <Clock className="w-8 h-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">No itinerary published yet.</p>
+            <p className="text-sm">{t("ui.no.itinerary.published.yet.291a19b")}</p>
           </div>
         ) : (
           dates.map((date, di) => {
@@ -97,7 +102,7 @@ export default function PublicTrip() {
             return (
               <div key={date} className="space-y-3">
                 <div className="sticky top-[60px] z-10 bg-neutral-950/90 backdrop-blur py-2 -mx-[15px] px-[15px] border-b border-white/10">
-                  <h2 className="font-heading font-bold text-white text-lg">{format(parseISO(date), "EEEE, d MMMM")}</h2>
+                  <h2 className="font-heading font-bold text-white text-lg">{formatAppDate(parseISO(date), "EEEE, d MMMM")}</h2>
                 </div>
                 {dayItems.map((it) => (
                   <div key={it.id}>
@@ -106,7 +111,7 @@ export default function PublicTrip() {
                         <div className="flex items-start justify-between gap-2">
                           <span className="font-mono text-sm text-white/70">{it.start_time}–{it.end_time}</span>
                           {it.ticket_status === "purchased" && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-lime/20 text-lime">Ticket purchased</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-lime/20 text-lime">{t("ui.ticket.purchased.59b6d37")}</span>
                           )}
                         </div>
                         <h3 className="font-heading font-semibold text-white text-lg mt-1.5">{it.title}</h3>
@@ -117,8 +122,7 @@ export default function PublicTrip() {
                           </p>
                         )}
                         <div className="mt-2 text-xs text-white/50 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {it.duration_min || 0} min
-                        </div>
+                          <Clock className="w-3 h-3" /> {it.duration_min || 0}{" "}{t("ui.min.1f6fa6f")}</div>
                       </div>
                     ) : it.step_type === "transport" ? (
                       <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-4">
@@ -128,15 +132,14 @@ export default function PublicTrip() {
                               {it.route_mode === "walk" ? <Footprints className="w-4 h-4 text-blue-300" /> : <Navigation className="w-4 h-4 text-blue-300" />}
                             </div>
                             <span className="text-xs font-semibold uppercase tracking-wider text-blue-300">
-                              {it.route_mode === "walk" ? "Walk" : it.route_mode === "transit" ? "Public transit" : it.route_mode === "taxi" ? "Taxi" : "Car"}
+                              {it.route_mode === "walk" ? t("ui.walk.08ee52a") : it.route_mode === "transit" ? t("ui.public.transit.c2e70cf") : it.route_mode === "taxi" ? t("ui.taxi.7793c31") : t("ui.car.a5cdf07")}
                             </span>
                           </div>
                           <span className="font-mono text-xs text-white/50">{it.start_time}–{it.end_time}</span>
                         </div>
-                        <p className="text-sm font-medium text-white">{it.title}</p>
+                        <p className="text-sm font-medium text-white">{translateText(it.title)}</p>
                         <div className="mt-2 text-xs text-white/50 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {it.route_duration_min || it.duration_min || 0} min
-                        </div>
+                          <Clock className="w-3 h-3" /> {it.route_duration_min || it.duration_min || 0}{" "}{t("ui.min.1f6fa6f")}</div>
                         {it.route_origin && it.route_destination && (
                           <a
                             href={buildMapsLink({ origin: it.route_origin, destination: it.route_destination, mode: it.route_mode || "transit" })}
@@ -144,24 +147,23 @@ export default function PublicTrip() {
                             rel="noopener noreferrer"
                             className="mt-2 inline-flex items-center gap-1 text-xs text-blue-300 hover:text-blue-200"
                           >
-                            <ExternalLink className="w-3 h-3" /> Open in Google Maps
-                          </a>
+                            <ExternalLink className="w-3 h-3" />{" "}{t("ui.open.in.google.maps.7f22a63")}</a>
                         )}
                       </div>
                     ) : it.step_type === "meal" ? (
                       <div className="rounded-xl bg-orange-500/5 border border-orange-500/20 p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-orange-200">🍽️ {it.title}</span>
+                          <span className="text-sm font-medium text-orange-200">🍽️ {translateText(it.title)}</span>
                           <span className="font-mono text-xs text-white/50">{it.start_time}–{it.end_time}</span>
                         </div>
                       </div>
                     ) : (
                       <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                        <span className="text-sm text-white/60">{it.title}</span>
+                        <span className="text-sm text-white/60">{translateText(it.title)}</span>
                         <span className="font-mono text-xs text-white/40 ml-2">{it.start_time}–{it.end_time}</span>
                       </div>
                     )}
-                    {it.restaurant&&<div className="text-sm text-white/60 mt-2"><p>{it.restaurant.category}</p><p>{it.location}</p><a href={it.restaurant.maps_url} target="_blank" rel="noopener noreferrer" className="text-lime">Open in Google Maps</a></div>}
+                    {it.restaurant&&<div className="text-sm text-white/60 mt-2"><p>{translateText(it.restaurant.category)}</p><p>{it.location}</p><a href={it.restaurant.maps_url} target="_blank" rel="noopener noreferrer" className="text-lime">{t("ui.open.in.google.maps.7f22a63")}</a></div>}
                   </div>
                 ))}
               </div>
@@ -172,8 +174,7 @@ export default function PublicTrip() {
 
       <div className="max-w-2xl mx-auto px-[15px] mt-8">
         <div className="flex items-center justify-center gap-2 text-xs text-white/30">
-          <Compass className="w-3 h-3" /> Shared via TripNexa · View-only
-        </div>
+          <Compass className="w-3 h-3" />{" "}{t("ui.shared.via.tripnexa.view.only.fd22e64")}</div>
       </div>
     </div>
   );

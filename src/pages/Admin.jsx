@@ -1,3 +1,5 @@
+import AdminStorage from '@/components/admin/AdminStorage';
+import AdminPublicItineraries from '@/components/admin/AdminPublicItineraries';
 import { useEffect,useState } from 'react';
 import { Link,Route,Routes } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
@@ -5,6 +7,7 @@ import { adminApi } from '@/api/admin';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminMfa from '@/components/admin/AdminMfa';
 import AdminFiles from '@/components/admin/AdminFiles';
+import AdminBilling from '@/components/admin/AdminBilling';
 import AdminAffiliates from '@/components/admin/AdminAffiliates';
 import {AdminDomains,AdminAuthentication} from '@/components/admin/AdminAuthentication';
 import {DataTable} from '@/components/admin/AdminCommon';
@@ -23,12 +26,14 @@ export default function Admin(){
  if(!status.verified)return <div className="admin-shell admin-enrollment"><AdminMfa status={status} onVerified={markVerified}/><Link to="/">Return to trips</Link></div>;
  return <AdminLayout><Routes>
   <Route index element={<AdminDashboard/>}/>
+  <Route path="public-itineraries" element={<AdminPublicItineraries/>}/>
+  <Route path="billing" element={<AdminBilling/>}/>
   <Route path="domains" element={<AdminDomains/>}/><Route path="authentication" element={<AdminAuthentication/>}/>
   <Route path="users" element={<DataTable title="Users" description="Account management with server-enforced permissions." path="/users" detailBase="/admin/users" columns={['email','display_name','email_verified','role','status','created_date','last_activity','trips_count','upload_count','storage_bytes'].map(key=>({key}))} sorts={['created','email','name','role','status']} filters={[{key:'role',label:'Role',options:['USER','ADMIN','SUPER_ADMIN']},{key:'status',label:'Status',options:['ACTIVE','SUSPENDED','DISABLED','PENDING_DELETION']},{key:'verified',label:'Verified',options:['true','false']}]}/>}/>
   <Route path="users/:id" element={<AdminUser/>}/>
   <Route path="trips" element={<DataTable title="Trips" description="Global summaries. Private documents are not included." path="/trips" detailBase="/admin/trips" columns={['name','destination','owner_email','start_date','end_date','plan_status','itinerary_count','share_enabled','created_date'].map(key=>({key}))} sorts={['created','updated','name','destination']} filters={[{key:'shared',label:'Shared',options:['true','false']},{key:'itinerary',label:'Itinerary',options:['true','false']},{key:'review',label:'Needs review',options:['true']}]}/>}/>
   <Route path="trips/:id" element={<AdminTrip/>}/>
-  <Route path="files" element={<AdminFiles/>}/>
+  <Route path="files" element={<AdminFiles/>}/><Route path="storage" element={<AdminStorage/>}/>
   <Route path="tours-tickets" element={<AdminAffiliates/>}/><Route path="referrals" element={<AdminAffiliates initial="mappings"/>}/><Route path="affiliate-analytics" element={<AdminAffiliates initial="analytics"/>}/>
   <Route path="analytics" element={<AdminAnalytics/>}/>
   <Route path="health" element={<AdminHealth/>}/><Route path="security" element={<AdminHealth security/>}/>

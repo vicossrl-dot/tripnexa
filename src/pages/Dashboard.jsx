@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '@/api/client';
 import { TripNavigation, TripLoading } from '@/components/trip/TripUI';
 import TripOverview from '@/components/trip/TripOverview';
+import {PremiumTripFeatures,TripExportAction} from '@/components/trip/PremiumTripFeatures';
 
 export default function Dashboard() {
   const {tripId}=useParams();
@@ -15,5 +16,5 @@ export default function Dashboard() {
     return()=>{active=false;};
   },[tripId,revision]);
   if(!data)return <TripLoading error={error}/>;
-  return <div className="trip-experience"><TripNavigation trip={data.trip} onUpdated={trip=>setData(previous=>({...previous,trip}))}/><main className="trip-container py-6 sm:py-8 pb-16"><TripOverview {...data} onUpdated={()=>setRevision(v=>v+1)}/></main></div>;
+  return <PremiumTripFeatures trip={data.trip} plan={data.plan}><div className="trip-experience"><TripNavigation trip={data.trip} actions={<TripExportAction/>} onUpdated={trip=>setData(previous=>({...previous,trip}))}/><main className="trip-container py-6 sm:py-8 pb-16"><TripOverview {...data} onUpdated={()=>setRevision(v=>v+1)}/></main></div></PremiumTripFeatures>;
 }

@@ -3,10 +3,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { api } from '@/api/client';
 import { Compass, ShieldCheck, LogOut } from 'lucide-react';
 export const ADMIN_GROUPS=[
- ['Management',[['users','Users'],['trips','Trips'],['files','Travel Wallet / Files']]],
+ ['Management',[['users','Users'],['trips','Trips'],['public-itineraries','Public itineraries'],['files','Travel Wallet / Files']]],
  ['Operations',[['analytics','Analytics'],['ai','AI & Providers'],['integrations','Integrations'],['email','Email'],['logs','Logs'],['audit','Audit'],['health','System Health']]],
- ['Revenue',[['tours-tickets','Tours & Tickets'],['referrals','Referral Links'],['affiliate-analytics','Affiliate Analytics']]],
- ['Configuration',[['domains','Domains & URLs'],['authentication','Authentication Providers'],['settings','App Settings'],['branding','Branding'],['features','Feature Flags'],['limits','Limits & Quotas'],['security','Security']]],
+ ['Revenue',[['billing','Billing & Monetization'],['tours-tickets','Tours & Tickets'],['referrals','Referral Links'],['affiliate-analytics','Affiliate Analytics']]],
+ ['Configuration',[['storage','Storage & CDN'],['domains','Domains & URLs'],['authentication','Authentication Providers'],['settings','App Settings'],['branding','Branding'],['features','Feature Flags'],['limits','Limits & Quotas'],['security','Security']]],
  ['System',[['maintenance','Maintenance'],['jobs','Jobs'],['support','Support'],['data','Data Inspector']]],
 ];
 export default function AdminLayout({children}) {

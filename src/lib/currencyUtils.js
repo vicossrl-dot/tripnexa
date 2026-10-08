@@ -1,3 +1,4 @@
+import { getLocale } from '../i18n/runtime.js';
 // Currency conversion utility for TripSync
 // Uses frankfurter.app — free, no API key, ECB rates
 
@@ -44,7 +45,7 @@ export function convertAmount(amount, rate) {
 export function formatCurrency(amount, currency) {
   const cur = SUPPORTED_CURRENCIES.find((c) => c.code === currency);
   const symbol = cur?.symbol || currency || "";
-  const formatted = (amount || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  const formatted = (amount || 0).toLocaleString(getLocale(), { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   return `${symbol}${formatted}`;
 }
 

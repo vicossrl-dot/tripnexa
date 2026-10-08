@@ -9,7 +9,7 @@ import {requireSuperAdmin,requireRecentAuth} from './permissions.js';
 import {runtimeSettings,credential} from './runtime.js';
 import {rateLimit} from 'express-rate-limit';
 import {sendMail} from '../mail.js';
-const secrets={OPENAI_API_KEY:'openai',GOOGLE_MAPS_API_KEY:'google',SMTP_PASSWORD:'smtp',SMTP_USER:'smtp',GETYOURGUIDE_API_KEY:'getyourguide',VIATOR_API_KEY:'viator',TIQETS_API_TOKEN:'tiqets'};
+const secrets={BUNNY_STORAGE_PASSWORD:'bunny',STRIPE_SECRET_KEY:'stripe',STRIPE_WEBHOOK_SECRET:'stripe',STRIPE_PUBLISHABLE_KEY:'stripe',OPENAI_API_KEY:'openai',GOOGLE_MAPS_API_KEY:'google',SMTP_PASSWORD:'smtp',SMTP_USER:'smtp',GETYOURGUIDE_API_KEY:'getyourguide',VIATOR_API_KEY:'viator',TIQETS_API_TOKEN:'tiqets'};
 export async function smtpConfiguration(overrides={}){
  const settings=runtimeSettings()?.settings||{},host=settings.smtp_host||process.env.SMTP_HOST||'';
  return{host,port:Number(settings.smtp_host?settings.smtp_port:process.env.SMTP_PORT||587),secure:settings.smtp_host?settings.smtp_secure:process.env.SMTP_SECURE==='true',

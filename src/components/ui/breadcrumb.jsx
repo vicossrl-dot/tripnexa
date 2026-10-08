@@ -1,3 +1,5 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { ChevronRight, MoreHorizontal } from "lucide-react"
@@ -5,30 +7,27 @@ import { ChevronRight, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const Breadcrumb = React.forwardRef(
-  ({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />
+  ({ ...props }, ref) => { useLocale(); return (<nav ref={ref} aria-label={t("ui.breadcrumb.d6dc6b5")} {...props} />); }
 )
 Breadcrumb.displayName = "Breadcrumb"
 
-const BreadcrumbList = React.forwardRef(({ className, ...props }, ref) => (
-  <ol
+const BreadcrumbList = React.forwardRef(({ className, ...props }, ref) => { useLocale(); return (<ol
     ref={ref}
     className={cn(
       "flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5",
       className
     )}
-    {...props} />
-))
+    {...props} />); })
 BreadcrumbList.displayName = "BreadcrumbList"
 
-const BreadcrumbItem = React.forwardRef(({ className, ...props }, ref) => (
-  <li
+const BreadcrumbItem = React.forwardRef(({ className, ...props }, ref) => { useLocale(); return (<li
     ref={ref}
     className={cn("inline-flex items-center gap-1.5", className)}
-    {...props} />
-))
+    {...props} />); })
 BreadcrumbItem.displayName = "BreadcrumbItem"
 
 const BreadcrumbLink = React.forwardRef(({ asChild, className, ...props }, ref) => {
+  useLocale();
   const Comp = asChild ? Slot : "a"
 
   return (
@@ -40,45 +39,39 @@ const BreadcrumbLink = React.forwardRef(({ asChild, className, ...props }, ref) 
 })
 BreadcrumbLink.displayName = "BreadcrumbLink"
 
-const BreadcrumbPage = React.forwardRef(({ className, ...props }, ref) => (
-  <span
+const BreadcrumbPage = React.forwardRef(({ className, ...props }, ref) => { useLocale(); return (<span
     ref={ref}
     role="link"
     aria-disabled="true"
     aria-current="page"
     className={cn("font-normal text-foreground", className)}
-    {...props} />
-))
+    {...props} />); })
 BreadcrumbPage.displayName = "BreadcrumbPage"
 
 const BreadcrumbSeparator = ({
   children,
   className,
   ...props
-}) => (
-  <li
+}) => { useLocale(); return (<li
     role="presentation"
     aria-hidden="true"
     className={cn("[&>svg]:w-3.5 [&>svg]:h-3.5", className)}
     {...props}>
     {children ?? <ChevronRight />}
-  </li>
-)
+  </li>); }
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
 
 const BreadcrumbEllipsis = ({
   className,
   ...props
-}) => (
-  <span
+}) => { useLocale(); return (<span
     role="presentation"
     aria-hidden="true"
     className={cn("flex h-9 w-9 items-center justify-center", className)}
     {...props}>
     <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More</span>
-  </span>
-)
+    <span className="sr-only">{t("ui.more.d47d7cb")}</span>
+  </span>); }
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis"
 
 export {

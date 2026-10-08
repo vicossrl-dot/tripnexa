@@ -1,3 +1,5 @@
+import { t, translateText, getLocale } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Trash2 } from "lucide-react";
@@ -17,6 +19,7 @@ const STATUS_BADGE = {
 };
 
 export default function TripBagCard({ trip, endedOn, onDeleted }) {
+  useLocale();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const items = trip.cover_image_url
     ? [<img key="cover" src={trip.cover_image_url} alt="" className="w-full h-full object-cover" />]
@@ -27,7 +30,7 @@ export default function TripBagCard({ trip, endedOn, onDeleted }) {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="shrink-0">
       <ContextMenu>
       <ContextMenuTrigger asChild>
-      <Link to={`/trip/${trip.id}${trip.plan_version > 0 ? '/itinerary' : ''}`} className="group flex w-[140px] sm:w-[155px] flex-col items-center gap-3 px-2 pt-2 pb-1">
+      <Link to={`/trip/${trip.id}`} className="group flex w-[140px] sm:w-[155px] flex-col items-center gap-3 px-2 pt-2 pb-1">
         <div className="relative h-[68px] flex items-end justify-center">
           <Folder size={0.72} color="#ffbca4" items={items} />
           {endedOn && <PassportStamp date={endedOn} />}
@@ -41,13 +44,13 @@ export default function TripBagCard({ trip, endedOn, onDeleted }) {
           )}
           {trip.start_date && trip.end_date && (
             <p className="mt-0.5 text-[10px] text-white/40 font-mono">
-              {new Date(trip.start_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              {new Date(trip.start_date + t("ui.t00.00.00.cbb5ea6")).toLocaleDateString(getLocale(), { month: "short", day: "numeric" })}
               {" – "}
-              {new Date(trip.end_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              {new Date(trip.end_date + t("ui.t00.00.00.cbb5ea6")).toLocaleDateString(getLocale(), { month: "short", day: "numeric", year: "numeric" })}
             </p>
           )}
           <span className={`mt-1.5 inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${status.className}`}>
-            {status.label}
+            {translateText(status.label)}
           </span>
         </div>
       </Link>
@@ -57,8 +60,7 @@ export default function TripBagCard({ trip, endedOn, onDeleted }) {
           className="text-red-600 focus:text-red-600"
           onSelect={() => setConfirmOpen(true)}
         >
-          <Trash2 className="w-4 h-4 mr-2" /> Delete trip
-        </ContextMenuItem>
+          <Trash2 className="w-4 h-4 mr-2" />{" "}{t("ui.delete.trip.2669895")}</ContextMenuItem>
       </ContextMenuContent>
       </ContextMenu>
       <DeleteTripDialog

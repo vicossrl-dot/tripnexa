@@ -1,9 +1,12 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 import { FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Folder from "@/components/Folder";
 
 export default function DocumentsFolder({ items, onSelect, align = "center" }) {
+  useLocale();
   const navigate = useNavigate();
   const tripId = items[0]?.trip_id;
 
@@ -29,8 +32,7 @@ export default function DocumentsFolder({ items, onSelect, align = "center" }) {
         onOpen={() => tripId && navigate(`/trip/${tripId}/documents`)}
       />
       <p className="mt-4 text-[13px] font-light uppercase tracking-[0.25em] text-white/85">
-        {items.length} document{items.length === 1 ? "" : "s"} · Click to view all
-      </p>
+        {items.length}{" "}{t("ui.document.43cc23f")}{items.length === 1 ? "" : t("ui.s.043a718")}{" "}{t("ui.click.to.view.all.80b9e52")}</p>
     </div>
   );
 }

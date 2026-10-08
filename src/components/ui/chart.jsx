@@ -1,4 +1,6 @@
 "use client";
+import { translateText, getLocale } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -23,6 +25,7 @@ function useChart() {
 }
 
 const ChartContainer = React.forwardRef(({ id, className, children, config, ...props }, ref) => {
+  useLocale();
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
 
@@ -50,6 +53,7 @@ const ChartStyle = ({
   id,
   config
 }) => {
+  useLocale();
   const colorConfig = Object.entries(config).filter(([, config]) => config.theme || config.color)
 
   if (!colorConfig.length) {
@@ -97,6 +101,7 @@ const ChartTooltipContent = React.forwardRef((
   },
   ref
 ) => {
+  useLocale();
   const { config } = useChart()
 
   const tooltipLabel = React.useMemo(() => {
@@ -199,7 +204,7 @@ const ChartTooltipContent = React.forwardRef((
                     </div>
                     {item.value && (
                       <span className="font-mono font-medium tabular-nums text-foreground">
-                        {item.value.toLocaleString()}
+                        {item.value.toLocaleString(getLocale())}
                       </span>
                     )}
                   </div>
@@ -220,6 +225,7 @@ const ChartLegendContent = React.forwardRef((
   { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
   ref
 ) => {
+  useLocale();
   const { config } = useChart()
 
   if (!payload?.length) {
@@ -253,7 +259,7 @@ const ChartLegendContent = React.forwardRef((
                   backgroundColor: item.color,
                 }} />
             )}
-            {itemConfig?.label}
+            {translateText(itemConfig?.label)}
           </div>)
         );
       })}

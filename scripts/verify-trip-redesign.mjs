@@ -57,7 +57,7 @@ try {
  }
  assert.equal(await snapshot(),before,'Viewing must not mutate stored trip, planning, itinerary or attachment records');pass('Opening/refreshing all four pages and selecting days performs no data mutations');
  await browser.navigate(root+base+'/plan?step=0');await text('Destination & time');
- for(let i=0;i<6;i++){await evaluate(`document.querySelector('[data-plan-step="${i}"]').click()`);await text('Step '+(i+1)+' of 6');await wait("!document.body.innerText.includes('Saving…')");if([0,2,3].includes(i)){assert(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'));await browser.screenshot('mobile-planner-step-'+i);}}
+ for(let i=0;i<5;i++){await evaluate(`document.querySelector('[data-plan-step="${i}"]').click()`);await text('Step '+(i+1)+' of 5');await wait("!document.body.innerText.includes('Saving…')");if([0,2,3].includes(i)){assert(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'));await browser.screenshot('mobile-planner-step-'+i);}}
  pass('All six planning steps accessible; saved state retained');
  await browser.navigate(root+base+'/wallet?category=document');await text('Legacy image');await click('View','[data-wallet-item] button');await text('1 attached file');await click('View file','[data-wallet-file] button');await wait("document.querySelector('[data-wallet-viewer] img')?.naturalWidth>0");await browser.screenshot('mobile-legacy-file');await click('Close file');
  await browser.navigate(root+base+'/wallet?category=flight');await text('Flights (1)');await click('Add to Trip');await wait("!!document.querySelector('[role=dialog]')");await browser.screenshot('mobile-add-modal');

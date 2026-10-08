@@ -1,8 +1,11 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useRef, useState } from "react";
 import { ImageUp, Loader2 } from "lucide-react";
 import { api } from "@/api/client";
 
 export default function ImageReplaceButton({ item, onReplaced }) {
+  useLocale();
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
 
@@ -23,8 +26,9 @@ export default function ImageReplaceButton({ item, onReplaced }) {
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       <button
         onClick={() => inputRef.current?.click()}
-        aria-label="Replace image"
-        title="Replace image"
+        aria-label={t("ui.replace.image.fcedcb5")}
+        data-ui="replace-image"
+        title={t("ui.replace.image.fcedcb5")}
         className="w-9 h-9 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white active:scale-95 transition-transform"
       >
         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageUp className="w-4 h-4" />}

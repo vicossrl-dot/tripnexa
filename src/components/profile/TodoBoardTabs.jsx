@@ -1,8 +1,11 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export default function TodoBoardTabs({ boards, activeId, onSelect, onCreate, onDelete }) {
+  useLocale();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
 
@@ -27,7 +30,7 @@ export default function TodoBoardTabs({ boards, activeId, onSelect, onCreate, on
           <button onClick={() => onSelect(b.id)}>{b.name}</button>
           <button
             onClick={() => onDelete(b)}
-            aria-label={`Delete list ${b.name}`}
+            aria-label={t("ui.delete.list.value.94e7d4a", {v0: b.name})}
             className="opacity-60 hover:opacity-100 hover:text-red-500"
           >
             <X className="w-3.5 h-3.5" />
@@ -42,7 +45,7 @@ export default function TodoBoardTabs({ boards, activeId, onSelect, onCreate, on
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => !name.trim() && setAdding(false)}
-            placeholder="List name"
+            placeholder={t("ui.list.name.6c1247b")}
             className="h-9 w-36 rounded-[12px]"
           />
         </form>
@@ -51,8 +54,7 @@ export default function TodoBoardTabs({ boards, activeId, onSelect, onCreate, on
           onClick={() => setAdding(true)}
           className="flex items-center gap-1 rounded-[12px] px-3 py-1.5 text-sm font-medium text-neutral-500 border border-dashed border-neutral-300 hover:text-neutral-900 hover:border-neutral-900"
         >
-          <Plus className="w-3.5 h-3.5" /> New list
-        </button>
+          <Plus className="w-3.5 h-3.5" />{" "}{t("ui.new.list.a992f17")}</button>
       )}
     </div>
   );

@@ -1,7 +1,5 @@
-import path from 'node:path';
-import { unlink } from 'node:fs/promises';
+import {deleteStoredFile} from './storage/index.js';
 import { pool, transaction } from './db.js';
-import { config } from './config.js';
 
 // Only wallet-managed files are eligible. Existing images/avatars are not swept.
 export async function cleanupWalletFiles(ids = null) {
@@ -22,7 +20,7 @@ export async function cleanupWalletFiles(ids = null) {
     if (references[0].total) return;
     // A generated basename under the configured private storage root; never accept a user path.
     if (!/^[a-f0-9-]{36}\.(pdf|png|jpg|gif|webp)$/.test(file.filename)) throw new Error('Unsafe stored upload filename.');
-    try { await unlink(path.join(config.uploads, file.filename)); }
+    try { await deleteStoredFile(file); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
     await db.execute('DELETE FROM uploads WHERE id=?', [file.id]);
   });

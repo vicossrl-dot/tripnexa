@@ -16,6 +16,7 @@ const restoreFetch=live?()=>{}:(await import('./final-provider-fixtures.mjs')).i
 const report={date:new Date().toISOString(),mode:live?'real providers':'local fixtures',checks:[],providers:{smtp:process.env.SMTP_HOST?'configured':'development outbox'},failures:[]};
 const record=async(name,details={})=>{if(!live)name=name.replace(/^Real /,'Fixture ');report.checks.push({name,...details});console.log('PASS',name,JSON.stringify(details));await writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2));};
 const fail=async(name,error)=>{report.failures.push({name,error:String(error.message||error).slice(0,400)});console.log('FAIL',name);await writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2));};
+const verificationStarted=Date.now();
 const server=createApp().listen(0,'127.0.0.1');await once(server,'listening');const origin='http://127.0.0.1:'+server.address().port;config.appUrl=origin;process.env.PUBLIC_APP_URL=config.appUrl;
 let browser,userId,tripId,adminId;
 const email=randomUUID()+'@final.test',password=randomUUID()+'Strong!';
@@ -56,9 +57,12 @@ try{
  await evaluate(`fetch(${JSON.stringify(qr)}).then(r=>r.blob()).then(blob=>{const data=new FormData();data.append('file',blob,'verification-ticket.png');return fetch('/api/uploads/wallet',{method:'POST',headers:{'X-Requested-With':'TripSync'},body:data});}).then(async r=>{if(!r.ok)throw Error('Upload failed');return r.json();}).then(file=>window.__ticket=file)`);
  const file=await evaluate('window.__ticket'),ticket=await api(base+'/wallet/items',{item:{title:'Private verification ticket',category:'place'},attachments:[file]});await record('Private Wallet QR upload');
  const pdf=await evaluate(`fetch(${JSON.stringify('/api'+base+'/itinerary/pdf')}).then(async r=>({ok:r.ok,bytes:[...new Uint8Array(await r.arrayBuffer())]}))`);assert(pdf.ok);const bytes=Buffer.from(pdf.bytes);assert(bytes.subarray(0,4).toString()==='%PDF');await writeFile(path.join(output,'itinerary.pdf'),bytes);report.providers.pdf='working';await record('Real Chrome PDF export',{bytes:bytes.length});
+ // Keep the automated API burst separate from browser navigation; preserve real rate limits.
+ const cooldown=Math.max(0,61000-(Date.now()-verificationStarted));
+ if(cooldown){console.log('Pacing browser phase to respect the API rate-limit window.');await new Promise(resolve=>setTimeout(resolve,Math.min(60000,cooldown)));}
  for(const width of [1440,390]){
   await browser.viewport(width,width===390?844:1000);const prefix=width===390?'mobile':'desktop';
-  for(const [name,route,expected]of [['overview','/trip/'+tripId,'Trip Health'],['plan',base.replace('/trips/','/trip/')+'/plan?step=2','Preferences'],['suggestions','/trip/'+tripId+'/plan?step=4','Suggestions'],['itinerary','/trip/'+tripId+'/itinerary','Change itinerary'],['wallet','/trip/'+tripId+'/wallet','Travel Wallet'],['profile','/profile','Personal Details']]){
+  for(const [name,route,expected]of [['overview','/trip/'+tripId,'Trip Health'],['plan',base.replace('/trips/','/trip/')+'/plan?step=2','Preferences'],['suggestions','/trip/'+tripId+'/plan?step=4','AI suggestions'],['itinerary','/trip/'+tripId+'/itinerary','Change itinerary'],['wallet','/trip/'+tripId+'/wallet','Travel Wallet'],['profile','/profile','Personal Details']]){
    await go(route,expected);await screenshot(prefix+'-'+name);const overflow=await evaluate('document.documentElement.scrollWidth>innerWidth+2');if(overflow)await fail(prefix+' '+name+' horizontal overflow',Error('Content exceeds viewport'));else await record(prefix+' '+name+' layout');
    if(name==='profile'){await click('Security & privacy','[role=tab]');await text('Active sessions');await screenshot(prefix+'-security');}
    if(name==='wallet'){await go('/trip/'+tripId+'/wallet?item='+ticket.id,'View file');await click('View file');await wait("!!document.querySelector('[data-wallet-file-content] img')?.complete");await screenshot(prefix+'-ticket-qr');assert(await evaluate("document.querySelector('[data-wallet-file-content] img').naturalWidth>=900"));await click('Close file');}

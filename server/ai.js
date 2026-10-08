@@ -1,3 +1,4 @@
+import {billableOperation} from './billing/usage.js';
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import Ajv from 'ajv';
@@ -10,6 +11,8 @@ import { extractStay } from './stay-extraction.js';
 import { extractWalletFile } from './wallet-extraction.js';
 import {providerQuota,runtimeSettings} from './admin/runtime.js';
 import {recordProvider} from './admin/telemetry.js';
+import {serverLocale,localeInstruction,serverMessage,adminLocaleRequest} from './i18n.js';
+import {recordModelLocale} from './localized-content.js';
 
 export function strictSchema(input, depth = 0) {
   assert(input && depth <= 5 && ['object','array','string','number','boolean'].includes(input.type), 400, 'Invalid AI response schema.');
@@ -30,22 +33,28 @@ export function strictSchema(input, depth = 0) {
   }
   return result;
 }
-export async function provider(path, body, fetchImpl = fetch, timeout = 120000) {
+export const providerTimeoutMs=timeout=>Math.min(timeout,(runtimeSettings()?.settings.ai_timeout_seconds||120)*1000);
+export async function provider(path, body, fetchImpl = fetch, timeout = 120000, {signal,beforeRequest,canonicalEvidence=false} = {}) {
+  if(path==='responses'&&!canonicalEvidence&&!adminLocaleRequest())body={...body,instructions:(body.instructions||'')+'\n'+localeInstruction(serverLocale())};
   await providerQuota('openai',path);const began=Date.now();
-  timeout=Math.min(timeout,(runtimeSettings()?.settings.ai_timeout_seconds||120)*1000);
-  let response;
+  timeout=providerTimeoutMs(timeout);
+  // Optional feature-specific quota is reserved only after generic quota checks.
+  let permit,started=false,response;
   try {
+    signal?.throwIfAborted();permit=await beforeRequest?.(signal);
+    signal?.throwIfAborted();
+    started=true;
     response = await fetchImpl(`https://api.openai.com/v1/${path}`, {
       method: 'POST', headers: { Authorization: `Bearer ${config.aiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body), signal: AbortSignal.timeout(timeout),
+      body: JSON.stringify(body), signal: signal ? AbortSignal.any([signal,AbortSignal.timeout(timeout)]) : AbortSignal.timeout(timeout),
     });
-  } catch (cause) { await recordProvider({provider:'openai',operation:path,success:false,latency:Date.now()-began,model:body.model});throw providerError('OpenAI', { cause }); }
+  } catch (cause) { if(cause.code==='ESSENTIALS_DAILY_LIMIT')throw cause;if(!started&&permit)await permit.cancel();await recordProvider({provider:'openai',operation:path,success:false,latency:Date.now()-began,model:body.model});throw providerError('OpenAI', { cause }); }
   if (!response.ok) {
     await recordProvider({provider:'openai',operation:path,success:false,latency:Date.now()-began,model:body.model,status:response.status});
     const data = await response.json().catch(() => ({}));
     throw providerError('OpenAI', { status: response.status, code: data.error?.code || data.error?.type, requestId: response.headers.get('x-request-id') });
   }
-  const result=await response.json();await recordProvider({provider:'openai',operation:path,success:true,latency:Date.now()-began,model:body.model,inputTokens:result.usage?.input_tokens??null,outputTokens:result.usage?.output_tokens??null,status:response.status,requestId:response.headers?.get?.('x-request-id')});return result;
+  const result=await response.json();await recordProvider({provider:'openai',operation:path,success:true,latency:Date.now()-began,model:body.model,inputTokens:result.usage?.input_tokens??null,outputTokens:result.usage?.output_tokens??null,status:response.status,requestId:response.headers?.get?.('x-request-id')});if(path==='responses'&&!canonicalEvidence&&!adminLocaleRequest())await recordModelLocale(result,serverLocale());return result;
 }
 export const aiRouter = Router();
 aiRouter.use(rateLimit({ windowMs: 60000, limit: 10, keyGenerator: req => req.user.id, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Please wait a minute before requesting more AI results.' } }));
@@ -61,7 +70,7 @@ export async function generateTripNames(body, fetchImpl = fetch) {
   assert(typeof destination === 'string' && destination.trim().length > 0 && destination.length <= 200, 400, 'Enter a destination first.');
   assert(!travel_type || ['plane','car','train','ship','bus','mixed'].includes(travel_type), 400, 'Invalid travel type.');
   const word = destination.match(/[\p{L}\p{N}]{1,24}/u)?.[0] || 'Travel';
-  const fallback = { names: [`${word} Escape`, `${word} Bound`, `${word} Days`], source: 'fallback', message: 'AI suggestions are unavailable. Here are three simple ideas; you can also type your own name.' };
+  const fallback = { names: ['Escape','Bound','Days'].map(suffix=>`${word} ${serverMessage(suffix)}`), source: 'fallback', message: serverMessage('AI suggestions are unavailable. Here are three simple ideas; you can also type your own name.') };
   if (!config.aiKey || !config.aiModel) return fallback;
   try {
     const result = await provider('responses', {
@@ -75,13 +84,14 @@ export async function generateTripNames(body, fetchImpl = fetch) {
   } catch { return fallback; }
 }
 aiRouter.post('/trip-names', async (req, res) => res.json(await generateTripNames(req.body)));
-aiRouter.post('/stay-extraction', async (req, res) => res.json(await extractStay(req.body, req.user.id, provider)));
-aiRouter.post('/wallet-extraction', async (req, res) => res.json(await extractWalletFile(req.body, req.user.id, provider)));
+aiRouter.post('/stay-extraction', async (req, res) => res.json(await billableOperation(req.user.id,req.body?.trip_id||null,'ai_document_extractions',()=>extractStay(req.body,req.user.id,provider))));
+aiRouter.post('/wallet-extraction', async (req, res) => res.json(await billableOperation(req.user.id,req.body?.trip_id||null,'ai_document_extractions',()=>extractWalletFile(req.body,req.user.id,provider))));
 aiRouter.post('/planning-suggestions', async (req, res) => {
   const context = await loadPlanningContext(req.body?.trip_id, req.user.id);
   res.json(await generatePlanningSuggestions(context, provider));
 });
 aiRouter.post('/text', async (req, res) => {
+  const data=await billableOperation(req.user.id,req.body?.trip_id||null,'advanced_ai',async()=>{
   assert(config.aiKey && config.aiModel, 503, 'AI is not configured yet. You can enter the details manually.');
   const { prompt, response_json_schema, add_context_from_internet } = req.body;
   assert(typeof prompt === 'string' && prompt.length > 0 && prompt.length <= 15000, 400, 'Invalid prompt.');
@@ -98,14 +108,17 @@ aiRouter.post('/text', async (req, res) => {
   try { data = JSON.parse(output); } catch { throw new HttpError(502, 'The AI response was incomplete. Please try again.'); }
   const validate = new Ajv({ strict: false }).compile(schema);
   assert(validate(data), 502, 'The AI response had an unexpected format.');
-  res.json(data);
+  return data;
+  });res.json(data);
 });
 aiRouter.post('/image', async (req, res) => {
+  const saved=await billableOperation(req.user.id,req.body?.trip_id||null,'advanced_ai',async()=>{
   assert(config.aiKey && config.imageModel, 503, 'Image generation is not configured yet. You can upload your own image.');
   assert(typeof req.body.prompt === 'string' && req.body.prompt.length > 0 && req.body.prompt.length <= 4000, 400, 'Invalid image prompt.');
   const result = await provider('images/generations', { model: config.imageModel, prompt: req.body.prompt, n: 1, size: '1024x1024' });
   const encoded = result.data?.[0]?.b64_json;
   assert(encoded, 502, 'The selected image model must return base64 image data.');
-  const saved = await saveImage(Buffer.from(encoded, 'base64'), req.user.id);
+  return saveImage(Buffer.from(encoded, 'base64'), req.user.id, req.body.trip_id || null, true);
+  });
   res.json({ url: saved.file_url });
 });

@@ -1,0 +1,69 @@
+/* Dialogs are portalled outside the trip's theme container. */
+.ticket-options-modal {
+  --travel-surface: #171717;
+  --travel-soft: #262626;
+  --travel-border: #525252;
+  --travel-ink: #fafafa;
+  color-scheme: dark;
+  min-width: 0;
+}
+
+.ticket-options-modal .trip-button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.ticket-options-modal .trip-button.secondary {
+  background: #171717;
+  border-color: #525252;
+  color: #fafafa;
+}
+
+.ticket-options-modal .trip-button.secondary:hover:not(:disabled) {
+  background: #262626;
+  color: #fafafa;
+}
+
+.ticket-options-modal .trip-button.primary {
+  background: #ffc7b0;
+  color: #211a17;
+}
+
+.ticket-options-modal .trip-button.primary:hover:not(:disabled) {
+  background: #ffdacb;
+  color: #211a17;
+}
+
+.ticket-options-modal .trip-button:disabled {
+  background: #333333;
+  border-color: #525252;
+  color: #bfbfbf;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.ticket-options-modal :is(input, select, textarea) {
+  background: #171717;
+  border-color: #525252;
+  color: #fafafa;
+  color-scheme: dark;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ticket-options-modal :is(input, textarea)::placeholder {
+  color: #bfbfbf;
+  opacity: 1;
+}
+
+.ticket-options-modal select option {
+  background: #171717;
+  color: #fafafa;
+}
+
+.ticket-options-modal :is(input, select, textarea, button, a):focus-visible {
+  outline: 2px solid #ffc7b0;
+  outline-offset: 3px;
+}

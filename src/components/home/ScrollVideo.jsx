@@ -46,7 +46,7 @@ export default function ScrollVideo({ srcs, endImage, openImage, onOpen, onOpeni
       });
     };
     next.currentTime = 0;
-    Promise.resolve(next.play()).catch(() => {}).then(() => {
+    Promise.resolve(next.play()).catch(() => { if (!cancelled) setFinished(true); }).then(() => {
       // Wait until the first frame is actually painted before cutting over
       if (next.requestVideoFrameCallback) next.requestVideoFrameCallback(swap);
       else requestAnimationFrame(swap);
@@ -61,10 +61,12 @@ export default function ScrollVideo({ srcs, endImage, openImage, onOpen, onOpeni
           key={src}
           ref={(el) => (refs.current[i] = el)}
           src={src}
+          poster={endImage}
           muted
           playsInline
           preload="auto"
           autoPlay={i === 0}
+          onError={() => setFinished(true)}
           onTimeUpdate={(e) => {
             // Only once the video is effectively frozen on its final frame do
             // we start the crossfade — fading in earlier, while the video is

@@ -49,7 +49,7 @@ test('emails and opaque session cookies are validated', () => {
 });
 test('entity validation excludes ownership and credential injection', () => {
   const data = validateData('Trip', { name: 'Rome', owner_id: 'someone-else', created_by_id: 'someone-else', share_token: 'chosen-by-client' });
-  assert.deepEqual(data, { name: 'Rome' });
+  assert.deepEqual(data, { name: 'Rome', share_public_itinerary: true });
   assert.throws(() => validateData('User', { role: 'admin' }, true), /Unknown field/);
   assert.throws(() => validateData('Trip', { name: 'Rome', start_date: '2026-02-31' }), /date/);
   assert.throws(() => validateData('TripItem', { title: 'X', category: 'invalid' }), /category/);

@@ -1,3 +1,4 @@
+import { getLocale } from '../i18n/runtime.js';
 // Presentation only: no defaults here are written back into trip data.
 export function tripDates(trip, plan = null) {
   const dates = new Set(plan?.dates || []);
@@ -10,7 +11,7 @@ export function tripDates(trip, plan = null) {
 }
 export function friendlyDate(date, options = {}) {
   if (!date || !Number.isFinite(Date.parse(date))) return 'Not set';
-  return new Intl.DateTimeFormat('en-GB', {day:'numeric',month:'short',...options}).format(new Date(date.slice(0,10)+'T12:00:00'));
+  return new Intl.DateTimeFormat(typeof window === 'undefined' ? 'en-GB' : getLocale(), {day:'numeric',month:'short',...options}).format(new Date(date.slice(0,10)+'T12:00:00'));
 }
 export const dateRange = trip => trip.start_date && trip.end_date ? `${friendlyDate(trip.start_date)} – ${friendlyDate(trip.end_date,{year:'numeric'})}` : 'Dates to be decided';
 export function daySummary(items) {

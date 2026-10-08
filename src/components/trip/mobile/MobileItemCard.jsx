@@ -1,7 +1,10 @@
+import { translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 import { getCategory } from "@/components/trip/categories";
 
 export default function MobileItemCard({ item, onSelect }) {
+  useLocale();
   const cat = getCategory(item);
   const Icon = cat.icon;
   const note = (item.notes || "").split("\n")[0];
@@ -16,7 +19,7 @@ export default function MobileItemCard({ item, onSelect }) {
       <div className="flex-1 min-w-0">
         <p className="font-heading font-semibold text-neutral-900 text-[15px] leading-snug truncate">{item.title}</p>
         <p className="mt-0.5 font-mono text-[13px] uppercase tracking-[0.05em] text-neutral-500 truncate">
-          {cat.label}
+          {translateText(cat.label)}
           {note && <span className="normal-case tracking-normal font-body"> · {note}</span>}
         </p>
       </div>

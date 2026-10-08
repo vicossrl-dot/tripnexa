@@ -9,6 +9,7 @@ import { snapshot,revision,readItinerary } from './itinerary-service.js';
 import { coordinates,kilometers,mealContext } from './meal-context.js';
 import { foodPreferences } from '../src/lib/dining.js';
 import {runtimeSettings} from './admin/runtime.js';
+import {serverLocale,serverMessage} from './i18n.js';
 
 const cache=new Map(),ttl=10*60000;
 const types={'Italian':['italian','pizza'],'Greek':['greek'],'French':['french'],'Middle Eastern / Lebanese':['lebanese','middle_eastern'],'Asian':['asian','chinese','thai','korean','vietnamese'],'Japanese / Sushi':['japanese','sushi'],'Seafood':['seafood'],'Steakhouse / Grill':['steak','barbecue'],'Vegetarian / Vegan':['vegetarian','vegan'],'Fast Food / Street Food':['fast_food','hamburger','sandwich']};
@@ -25,7 +26,7 @@ export async function searchMeals(state,meal,fetchImpl=fetch){
  const mask='id,displayName,formattedAddress,location,primaryType,types,rating,userRatingCount,priceLevel,googleMapsUri,servesVegetarianFood,businessStatus';
  const batches=await Promise.all(groups.map(async group=>{
   const query=group.map(c=>c==='Local / Traditional'?'local traditional cuisine':c==='Any cuisine'?'':c).filter(Boolean).join(' or ');
-  const response=await google('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':config.googleMapsKey,'X-Goog-FieldMask':mask.split(',').map(k=>'places.'+k).join(',')},body:JSON.stringify({textQuery:`${query} restaurants ${state.trip.destination||''} ${dietary}`.trim(),includedType:'restaurant',strictTypeFiltering:true,pageSize:20,languageCode:'en',locationBias:{circle:{center:{latitude:context.anchor.lat,longitude:context.anchor.lng},radius}},...(priceFilters[state.trip.dining_budget]?{priceLevels:priceFilters[state.trip.dining_budget]}:{})})},fetchImpl);
+  const response=await google('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':config.googleMapsKey,'X-Goog-FieldMask':mask.split(',').map(k=>'places.'+k).join(',')},body:JSON.stringify({textQuery:`${query} restaurants ${state.trip.destination||''} ${dietary}`.trim(),includedType:'restaurant',strictTypeFiltering:true,pageSize:20,languageCode:serverLocale(),locationBias:{circle:{center:{latitude:context.anchor.lat,longitude:context.anchor.lng},radius}},...(priceFilters[state.trip.dining_budget]?{priceLevels:priceFilters[state.trip.dining_budget]}:{})})},fetchImpl);
   return (response.places||[]).map(place=>({place,group}));
  }));
  const candidates=new Map();
@@ -44,7 +45,7 @@ export async function searchMeals(state,meal,fetchImpl=fetch){
 }
 export async function lookupMeals(tripId,ownerId,mealId,refresh=false,fetchImpl=fetch){
  const state=await transaction(db=>snapshot(db,tripId,ownerId));const meal=state.items.find(item=>item.id===mealId&&item.step_type==='meal');assert(meal,404,'Meal not found.');
- const before=revision(state),key=createHash('sha256').update(JSON.stringify({ownerId,tripId,mealId,date:meal.date,start:meal.start_time,end:meal.end_time,context:mealContext(state,meal),preferences:[state.trip.food_preferences,state.trip.dining_budget,state.trip.dietary_notes,state.trip.mobility_needs,state.trip.stroller]})).digest('hex');
+ const before=revision(state),key=createHash('sha256').update(JSON.stringify({locale:serverLocale(),ownerId,tripId,mealId,date:meal.date,start:meal.start_time,end:meal.end_time,context:mealContext(state,meal),preferences:[state.trip.food_preferences,state.trip.dining_budget,state.trip.dietary_notes,state.trip.mobility_needs,state.trip.stroller]})).digest('hex');
  for(const [k,v]of cache)if(v.expires<Date.now())cache.delete(k);
  if(!refresh&&cache.has(key)){cache.get(key).before=before;return cache.get(key).data;}
  const result=await searchMeals(state,meal,fetchImpl),token=randomUUID(),data={...result,token};
@@ -59,9 +60,11 @@ export async function chooseMeal(tripId,ownerId,mealId,body){
   const chosen={...restaurant,anchor:entry.data.context.anchor,selected_at:new Date().toISOString(),needs_review:false,food_preferences:state.trip.food_preferences,dining_budget:state.trip.dining_budget,dietary_notes:state.trip.dietary_notes};
   await db.execute('UPDATE itinerary_items SET meal_choice=? WHERE id=? AND trip_id=? AND owner_id=?',[JSON.stringify(chosen),mealId,tripId,ownerId]);
   await db.execute('UPDATE trips SET plan_version=COALESCE(plan_version,0)+1 WHERE id=? AND owner_id=?',[tripId,ownerId]);
+  const {queuePublicItinerary}=await import('./public-itineraries/queue.js');await queuePublicItinerary(db,tripId);
  });return readItinerary(tripId,ownerId);
 }
 export const mealRouter=Router();
+export function localizeMealOptions(data){return {...data,notice:serverMessage(data.notice),restaurants:data.restaurants.map(restaurant=>({...restaurant,price_label:restaurant.price_label?serverMessage(restaurant.price_label):null,description:serverMessage(restaurant.category)+' · Google Maps'}))};}
 const mealLimit=rateLimit({windowMs:60000,limit:20,keyGenerator:req=>req.user.id,standardHeaders:'draft-8',legacyHeaders:false});
-mealRouter.post('/:id/meals/:meal/options',mealLimit,async(req,res)=>res.json(await lookupMeals(req.params.id,req.user.id,req.params.meal,req.body?.refresh===true)));
+mealRouter.post('/:id/meals/:meal/options',mealLimit,async(req,res)=>res.json(localizeMealOptions(await lookupMeals(req.params.id,req.user.id,req.params.meal,req.body?.refresh===true))));
 mealRouter.post('/:id/meals/:meal/choice',mealLimit,async(req,res)=>res.json(await chooseMeal(req.params.id,req.user.id,req.params.meal,req.body||{})));

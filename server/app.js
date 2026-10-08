@@ -1,11 +1,14 @@
 import { mealRouter } from './meal-options.js';
+import {requestLocale,localizedErrors} from './i18n.js';
+import {localeRouter} from './locale-router.js';
 import {healthRouter} from './trip-health.js';
 import {ticketsRouter,publicTicketsRouter} from './affiliate-providers/router.js';
+import {premiumTravelRouter} from './premium-travel/router.js';
 import {accountRouter} from './account.js';
 import { randomUUID } from 'node:crypto';
 import { adminRouter } from './admin/router.js';
 import { mfaRouter } from './admin/mfa.js';
-import { requestContext,recordLog } from './admin/telemetry.js';
+import { requestContext,recordLog,recordEvent } from './admin/telemetry.js';
 import { runtimePolicy } from './admin/runtime.js';
 import { readSettings,publicSettings } from './admin/settings.js';
 import {brandingDirectory,brandFilename} from './admin/branding.js';
@@ -26,16 +29,22 @@ import './place-enrichment.js';
 import { walletRouter } from './wallet.js';
 import {socialRouter} from './social-auth/router.js';
 import {getAppUrls,allowedOrigins,urlDetails} from './app-urls.js';
+import {billingRouter} from './billing/router.js';
+import {stripeWebhook} from './billing/webhooks.js';
+import {publicItineraryApi,publicItineraryPages} from './public-itineraries/router.js';
+import {customizationRouter} from './public-itineraries/copy.js';
 
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
   app.use((req,res,next)=>{req.requestId=randomUUID();res.set('X-Request-ID',req.requestId);const began=Date.now();res.on('finish',()=>{if(res.statusCode>=400)void recordLog({level:res.statusCode>=500?'error':'warning',category:res.statusCode===429||res.statusCode===403||res.statusCode===401?'security':'api',event:res.statusCode===429?'rate_limit':'http_'+res.statusCode,status:res.statusCode,duration:Date.now()-began,requestId:req.requestId});});requestContext.run({requestId:req.requestId},next);});
   if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
+  app.use(requestLocale,localizedErrors);
   app.use((_req, res, next) => {
     res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'DENY' });
     next();
   });
+  app.post('/api/billing/webhook',express.raw({type:'application/json',limit:'1mb'}),stripeWebhook);
   app.use('/api', rateLimit({ windowMs: 60000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many requests. Please try again shortly.' } }));
   app.use('/api', async (req, res, next) => {
     res.set('Cache-Control', 'no-store');
@@ -60,36 +69,45 @@ export function createApp() {
   });
   app.get('/api/config',runtimePolicy, (_req, res) => {const all=requestContext.getStore().settings;res.json({ ai: Boolean(config.aiKey && config.aiModel && all.settings.ai_enabled), imageGeneration: Boolean(config.aiKey && config.imageModel && all.settings.ai_enabled), places: Boolean(config.googleMapsKey && all.settings.google_enabled && all.features.google_autocomplete),features:all.features });});
   app.get('/api/public-settings',async(_req,res)=>res.json(publicSettings(await readSettings())));
+  app.use('/api/public',publicItineraryApi);
   app.get('/api/shared/:token',async(req,res,next)=>{assert(/^[A-Za-z0-9_-]{24,128}$/.test(req.params.token),404,'Shared trip not found.');const all=await readSettings();assert(all.features.public_sharing&&!all.settings.maintenance_enabled,503,'Public sharing is currently unavailable.');next();},getSharedTrip);
   app.use('/api', loadUser);
+  app.use('/api',requestLocale);
   app.use('/api/shared',publicTicketsRouter);
   app.use('/api',(req,_res,next)=>{const context=requestContext.getStore();if(context)context.userId=req.user?.id||null;next();});
   app.use('/api',runtimePolicy);
+  app.use('/api/billing',billingRouter);
   app.use('/api',socialRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/account',requireUser,accountRouter);
   app.use('/api/admin/mfa', mfaRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/entities', requireUser, entityRouter);
+  app.use('/api/public-itineraries',requireUser,customizationRouter);
   app.use('/api/trips', requireUser, mealRouter);
   app.use('/api/trips', requireUser, healthRouter);
   app.use('/api/trips', requireUser, ticketsRouter);
   app.use('/api/trips', requireUser, tripRouter);
+  app.use('/api/trips', requireUser, localeRouter);
+  app.use('/api/trips', requireUser, premiumTravelRouter);
   app.use('/api/trips/:tripId/wallet', requireUser, walletRouter);
   app.use('/api/uploads', requireUser, uploadRouter);
   app.use('/api/ai', requireUser, aiRouter);
   app.use('/api/places', requireUser, placesRouter);
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Endpoint not found.' }));
+  app.use(publicItineraryPages);
   const dist = path.join(root, 'dist');
   if (existsSync(path.join(dist, 'index.html'))) {
     app.use(express.static(dist));
     app.get('/{*path}', (_req, res) => res.sendFile(path.join(dist, 'index.html')));
   }
   app.use((error, _req, res, _next) => {
+    if(error.billing?.code==='WALLET_LIMIT_REACHED')void recordEvent('wallet_limit_reached',_req.user?.id);
+    if(error.billing?.code==='TRIP_LIMIT_REACHED')void recordEvent('trip_limit_reached',_req.user?.id);
     const unavailable = ['ECONNREFUSED','ER_ACCESS_DENIED_ERROR','ER_BAD_DB_ERROR','ER_NO_SUCH_TABLE'].includes(error.code);
     const status = error.status || (error.code === 'LIMIT_FILE_SIZE' ? 413 : unavailable ? 503 : 500);
     if (status >= 500) console.error('API error:', error.code || error.message);
-    res.status(status).json({ error: status < 500 ? error.message : unavailable ? 'The database is not ready. Start MySQL and run npm run db:migrate.' : status === 502 || status === 503 ? error.message : 'The request could not be completed.' });
+    res.status(status).json({ error: status < 500 ? error.message : unavailable ? 'The database is not ready. Start MySQL and run npm run db:migrate.' : status === 502 || status === 503 ? error.message : 'The request could not be completed.',...(error.billing||{}) });
   });
   return app;
 }

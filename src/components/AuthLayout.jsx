@@ -1,16 +1,21 @@
+import { translateText, t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React,{useEffect,useState} from "react";
+import LanguageButton from '@/components/LanguageButton';
 
 export default function AuthLayout({ icon: Icon, title, subtitle, footer = null, children }) {
+  useLocale();
   const [site,setSite]=useState('');useEffect(()=>{fetch('/api/application-urls').then(r=>r.ok?r.json():null).then(data=>setSite(data?.site?.value||'')).catch(()=>{});},[]);
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
+        <div className="flex justify-end mb-6"><LanguageButton className="inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-border text-sm hover:bg-muted"/></div>
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
             <Icon className="w-7 h-7 text-primary-foreground" aria-hidden="true" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-          {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{translateText(title)}</h1>
+          {subtitle && <p className="text-muted-foreground mt-2">{translateText(subtitle)}</p>}
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
           {children}
@@ -18,7 +23,7 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer = null,
         {footer && (
           <p className="text-center text-sm text-muted-foreground mt-6">{footer}</p>
         )}
-        {site&&<p className="text-center text-sm text-muted-foreground mt-4"><a href={site} className="underline">Visit our website</a></p>}
+        {site&&<p className="text-center text-sm text-muted-foreground mt-4"><a href={site} className="underline">{t("ui.visit.our.website.a05e78e")}</a></p>}
       </div>
     </div>
   );

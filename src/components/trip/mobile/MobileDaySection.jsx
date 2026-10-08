@@ -1,3 +1,5 @@
+import { translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,6 +9,7 @@ import BulgeCard from "./BulgeCard";
 import MobileClosedIcons from "./MobileClosedIcons";
 
 export default function MobileDaySection({ slide, open, onToggle, onSelect }) {
+  useLocale();
   const accent = slide.accent;
   const headerRef = useRef(null);
 
@@ -39,8 +42,8 @@ export default function MobileDaySection({ slide, open, onToggle, onSelect }) {
           onClick={handleToggle}
           className="w-full flex items-baseline gap-3 px-5 text-left bg-lime pt-4 pb-3"
         >
-          <span className="shrink-0 font-mono text-[13px] font-light uppercase tracking-[0.25em] text-neutral-600">{slide.dayLabel}</span>
-          <span className="flex-1 min-w-0 font-heading font-medium tracking-[-0.03em] text-[19px] leading-tight truncate text-neutral-900">{slide.heading}</span>
+          <span className="shrink-0 font-mono text-[13px] font-light uppercase tracking-[0.25em] text-neutral-600">{translateText(slide.dayLabel)}</span>
+          <span className="flex-1 min-w-0 font-heading font-medium tracking-[-0.03em] text-[19px] leading-tight truncate text-neutral-900">{translateText(slide.heading)}</span>
           <ChevronDown className={`shrink-0 self-center w-4 h-4 transition-transform duration-300 text-neutral-500 ${open ? "rotate-180" : ""}`} />
         </button>
         <AnimatePresence initial={false}>

@@ -11,6 +11,13 @@ const boolean=value=>({type:'boolean',default:value});
 const choice=(value,options)=>({type:'string',default:value,options});
 export const definitions={
  settings:{
+  storage_provider:choice(process.env.STORAGE_PROVIDER||'local',['local','bunny']),
+  bunny_storage_zone:text(process.env.BUNNY_STORAGE_ZONE||'',100,{storageZone:true}),
+  bunny_storage_region:choice(process.env.BUNNY_STORAGE_REGION||'DE',['DE','NY','LA','SG','SYD','UK','SE','BR','JH']),
+  bunny_public_cdn_base:text(process.env.BUNNY_PUBLIC_CDN_BASE||'',500,{url:true}),
+  billing_enabled:boolean(process.env.BILLING_ENABLED==='true'),billing_provider:choice(process.env.BILLING_PROVIDER||'stripe',['stripe']),billing_mode:choice(process.env.BILLING_MODE==='live'?'live':'test',['test','live']),billing_enforcement_enabled:boolean(process.env.BILLING_ENFORCEMENT_ENABLED==='true'),
+  billing_free_ai_modifications:number(3,0,20),billing_premium_wallet_files:number(100,4,500),billing_past_due_grace_days:number(3,0,14),billing_unpaid_grace_days:number(0,0,7),billing_automatic_tax:boolean(false),billing_paypal_enabled:boolean(false),stripe_portal_configuration:text('',100,{model:true}),
+  ...Object.fromEntries(['PRO_MONTHLY','PRO_ANNUAL','TRIP_PACK_5','TRIP_PACK_10','TRIP_PACK_20'].map(code=>['stripe_price_'+code.toLowerCase(),text(process.env['STRIPE_PRICE_'+code]||'',100,{model:true})])),
   affiliate_public_enabled:boolean(true),affiliate_disclosure_text:text('Some links are affiliate links. TripNexa may earn a commission if you book, at no extra cost to you.',500,{public:true}),affiliate_disclosure_url:text('',500,{url:true,public:true}),
   google_routes_enabled:boolean(process.env.GOOGLE_ROUTES_ENABLED==='true'),
   app_name:text('TripNexa',60,{public:true}),support_email:text('',254,{public:true,email:true}),default_currency:choice('EUR',['EUR','USD','GBP','RON','MDL','JPY','CHF','CAD','AUD']),default_language:choice('en',['en','ro']),
@@ -37,6 +44,7 @@ export function validateSetting(section,key,value){
  else if(def.type==='boolean')assert(typeof value==='boolean',400,'Choose enabled or disabled.');
  else if(def.type==='array')assert(Array.isArray(value)&&value.length<=def.max&&value.every(host=>typeof host==='string'&&/^(?!-)[a-z0-9.-]+\.[a-z]{2,}$/.test(host)),400,'Use a list of hostnames without URLs or credentials.');
  else{assert(typeof value==='string'&&value.length<=(def.max||300)&&!/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value),400,'Invalid setting text.');if(def.options)assert(def.options.includes(value),400,'Choose an allowed value.');
+  if(value&&def.storageZone)assert(/^[a-zA-Z0-9][a-zA-Z0-9-]{0,99}$/.test(value),400,'Enter a valid storage zone name.');
   if(value&&def.email)assert(/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value),400,'Enter a valid email address.');
   if(value&&def.url){let url;try{url=new URL(value);}catch{}assert(url?.protocol==='https:'&&!url.username&&!url.password,400,'Use an HTTPS URL without credentials.');}
   if(value&&def.hostname)assert(/^[a-zA-Z0-9.-]+$/.test(value)&&!value.includes('..'),400,'Enter a hostname without protocol or path.');
@@ -64,6 +72,7 @@ export async function saveSetting(req,section,key,value,expectedVersion){
  await transaction(async db=>{
   await db.query("SELECT name FROM admin_locks WHERE name='privileged_accounts' FOR UPDATE");
   const [rows]=await db.execute(`SELECT CAST(value AS CHAR) AS value,version FROM ${table} WHERE setting_key=? FOR UPDATE`,[column]);const current=rows[0];assert(Number(expectedVersion)===(current?.version||0),409,'Setting changed. Reload before saving.');
+  if(section==='settings'&&key==='bunny_storage_zone'){const [[used]]=await db.execute("SELECT COUNT(*) AS total FROM uploads WHERE storage_provider='bunny' AND storage_zone<>?",[value]);assert(!Number(used.total),409,'Existing Bunny files use the current zone. Migrate them before changing the zone.');}
   const version=(current?.version||0)+1,old=current?parseJson(current.value):definitions[section][key].default;
   await db.execute(`INSERT INTO ${table}(setting_key,value,version,updated_by)VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE value=VALUES(value),version=VALUES(version),updated_by=VALUES(updated_by)`,[column,JSON.stringify(value),version,req.user.id]);
   await db.execute('INSERT INTO settings_history(id,section,setting_key,old_value,new_value,version,updated_by)VALUES(?,?,?,?,?,?,?)',[randomUUID(),section,key,JSON.stringify(old),JSON.stringify(value),version,req.user.id]);

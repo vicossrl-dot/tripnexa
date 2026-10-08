@@ -1,3 +1,5 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronUp } from "lucide-react";
@@ -8,6 +10,7 @@ const OPEN = "/media/1e6a33e56_travelapp_Gemini3NanoBananaPro_2026-07-19_10-57-4
 let shownThisLoad = false; // resets on every full page load / refresh
 
 export default function MobileIntro() {
+  useLocale();
   const [opened, setOpened] = useState(false);
   // Show only on a fresh page load (or refresh) — skipped for in-app navigation
   const [gone, setGone] = useState(() => {
@@ -68,8 +71,8 @@ export default function MobileIntro() {
           <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}>
             <ChevronUp className="w-7 h-7 text-white drop-shadow" />
           </motion.div>
-          <p className="font-heading font-black tracking-[-0.03em] text-white text-3xl leading-none drop-shadow">Swipe up.</p>
-          <p className="text-[11px] font-light uppercase tracking-[0.3em] text-white/80 drop-shadow">Start planning your trip</p>
+          <p className="font-heading font-black tracking-[-0.03em] text-white text-3xl leading-none drop-shadow">{t("ui.swipe.up.5a7cde7")}</p>
+          <p className="text-[11px] font-light uppercase tracking-[0.3em] text-white/80 drop-shadow">{t("ui.start.planning.your.trip.79ab602")}</p>
         </motion.div>
       </motion.div>
     </AnimatePresence>

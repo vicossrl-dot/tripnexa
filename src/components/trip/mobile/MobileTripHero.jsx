@@ -1,12 +1,15 @@
+import { translateText, t, formatAppDate } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState, useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { Image } from "@/components/ui/image";
-import { format, parseISO, differenceInCalendarDays } from "date-fns";
+import { parseISO, differenceInCalendarDays } from "date-fns";
 import TabletHeroCard from "./TabletHeroCard";
 import TravelBackground from '../TravelBackground';
 
 export default function MobileTripHero({ trip, items }) {
+  useLocale();
   const dates = (items || []).map((i) => i.date).filter(Boolean).sort();
   const start = dates[0];
   const end = (items || []).map((i) => i.end_date || i.date).filter(Boolean).sort().at(-1);
@@ -54,7 +57,7 @@ export default function MobileTripHero({ trip, items }) {
               }}
               className="absolute inset-x-8 top-14 bottom-44 rounded-2xl overflow-hidden shadow-xl"
             >
-              <Image src={s.image_url} alt={s.title} className="w-full h-full" fittingType="fill" />
+              <Image src={s.image_url} alt={translateText(s.title)} className="w-full h-full" fittingType="fill" />
             </motion.div>
           );
         })
@@ -75,11 +78,11 @@ export default function MobileTripHero({ trip, items }) {
         <div className="mt-2 flex items-center justify-between gap-2">
           {start && (
             <span className="font-mono text-[13px] uppercase tracking-[0.08em] text-neutral-700">
-              {format(parseISO(start), "dd.MM")} — {end ? format(parseISO(end), "dd.MM.yy") : ""}
+              {formatAppDate(parseISO(start), "dd.MM")} — {end ? formatAppDate(parseISO(end), "dd.MM.yy") : ""}
             </span>
           )}
           {daysToGo > 0 && (
-            <span className="font-mono text-[13px] uppercase tracking-[0.08em] text-neutral-900 bg-lime rounded-full px-2.5 py-0.5">In {daysToGo} days</span>
+            <span className="font-mono text-[13px] uppercase tracking-[0.08em] text-neutral-900 bg-lime rounded-full px-2.5 py-0.5">{t("ui.in.8bc1d53")}{" "}{daysToGo}{" "}{t("ui.days.ab51004")}</span>
           )}
         </div>
         {slides.length > 1 && (

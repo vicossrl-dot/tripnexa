@@ -1,3 +1,5 @@
+import { t, translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import FoodPreferences from './FoodPreferences';
 import React from "react";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ const INTERESTS = [
 const EXCLUSIONS = ["No museums", "No difficult trails", "No water activities", "No shopping"];
 
 export default function StepPreferences({ trip, update, dayWindows, onWindowsChange }) {
+  useLocale();
   const interests = (trip.interests || "").split(",").filter(Boolean);
   const exclusions = (trip.exclusions || "").split(",").filter(Boolean);
 
@@ -57,7 +60,7 @@ export default function StepPreferences({ trip, update, dayWindows, onWindowsCha
     <div className="space-y-6">
       <FoodPreferences trip={trip} update={update}/>
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Interests</h3>
+        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">{t("ui.interests.756aaea")}</h3>
         <div className="flex flex-wrap gap-2">
           {INTERESTS.map((it) => (
             <button
@@ -65,11 +68,11 @@ export default function StepPreferences({ trip, update, dayWindows, onWindowsCha
               onClick={() => toggle("interests", it)}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${interests.includes(it) ? "bg-lime text-neutral-900" : "bg-white/5 text-white/60 border border-white/10"}`}
             >
-              {it}
+              {translateText(it)}
             </button>
           ))}
         </div>
-        <h4 className="text-xs text-white/50 mt-4">Exclusions</h4>
+        <h4 className="text-xs text-white/50 mt-4">{t("ui.exclusions.fcc9f1f")}</h4>
         <div className="flex flex-wrap gap-2">
           {EXCLUSIONS.map((ex) => (
             <button
@@ -77,14 +80,14 @@ export default function StepPreferences({ trip, update, dayWindows, onWindowsCha
               onClick={() => toggle("exclusions", ex)}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${exclusions.includes(ex) ? "bg-red-500/20 text-red-300 border border-red-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}
             >
-              {ex}
+              {translateText(ex)}
             </button>
           ))}
         </div>
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Pace</h3>
+        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">{t("ui.pace.9582b50")}</h3>
         <div className="grid grid-cols-3 gap-2">
           {[
             { key: "relaxed", label: "Relaxed", desc: "Fewer places" },
@@ -96,51 +99,46 @@ export default function StepPreferences({ trip, update, dayWindows, onWindowsCha
               onClick={() => update("pace", p.key)}
               className={`rounded-xl border p-3 text-center transition-all ${trip.pace === p.key ? "border-lime bg-lime/10" : "border-white/10 bg-white/5"}`}
             >
-              <span className="block text-sm font-semibold text-white">{p.label}</span>
-              <span className="block text-xs text-white/40 mt-0.5">{p.desc}</span>
+              <span className="block text-sm font-semibold text-white">{translateText(p.label)}</span>
+              <span className="block text-xs text-white/40 mt-0.5">{translateText(p.desc)}</span>
             </button>
           ))}
         </div>
-        <p className="text-xs text-white/40">Intense pace doesn't mean skipping meals or exceeding opening hours. Values are explainable and editable.</p>
+        <p className="text-xs text-white/40">{t("ui.intense.pace.doesn.t.mean.skipping.meals.or.exceeding.opening.hou.c43e0cc")}</p>
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Transport & walking</h3>
+        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">{t("ui.transport.walking.4946bae")}</h3>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-white/60">Transport preference</Label>
+            <Label className="text-white/60">{t("ui.transport.preference.87abffe")}</Label>
             <Select value={trip.transport_preference || ""} onValueChange={(v) => update("transport_preference", v)}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue placeholder="Select…" /></SelectTrigger>
+              <SelectTrigger aria-label={t("ui.transport.preference.87abffe")} className="bg-white/5 border-white/10 text-white"><SelectValue placeholder={t("ui.select.731fe04")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="walk">Walk</SelectItem>
-                <SelectItem value="transit">Public transit</SelectItem>
-                <SelectItem value="taxi">Taxi</SelectItem>
-                <SelectItem value="car">Car</SelectItem>
-                <SelectItem value="mixed">Mixed</SelectItem>
+                <SelectItem value="walk">{t("ui.walk.08ee52a")}</SelectItem>
+                <SelectItem value="transit">{t("ui.public.transit.c2e70cf")}</SelectItem>
+                <SelectItem value="taxi">{t("ui.taxi.7793c31")}</SelectItem>
+                <SelectItem value="car">{t("ui.car.a5cdf07")}</SelectItem>
+                <SelectItem value="mixed">{t("ui.mixed.f340b6d")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div><Label className="text-white/60">Max walking / day (min)</Label><Input type="number" value={trip.max_walk_per_day_min ?? ""} onChange={(e) => update("max_walk_per_day_min", parseInt(e.target.value) || 0)} className="bg-white/5 border-white/10 text-white" /></div>
+          <div><Label className="text-white/60">{t("ui.max.walking.day.min.21a5463")}</Label><Input aria-label={t("ui.max.walking.day.min.21a5463")} type="number" value={trip.max_walk_per_day_min ?? ""} onChange={(e) => update("max_walk_per_day_min", parseInt(e.target.value) || 0)} className="bg-white/5 border-white/10 text-white" /></div>
         </div>
+
         <div className="grid grid-cols-2 gap-3">
-          <div><Label className="text-white/60">Max walking / segment (min)</Label><Input type="number" value={trip.max_walk_per_segment_min ?? ""} onChange={(e) => update("max_walk_per_segment_min", parseInt(e.target.value) || 0)} className="bg-white/5 border-white/10 text-white" /></div>
-          <div><Label className="text-white/60">Time buffer / segment (min)</Label><Input type="number" value={trip.buffer_min ?? 15} onChange={(e) => update("buffer_min", parseInt(e.target.value) || 15)} className="bg-white/5 border-white/10 text-white" /></div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label className="text-white/60">Meal duration (min)</Label><Input type="number" value={trip.meal_duration_min ?? 60} onChange={(e) => update("meal_duration_min", parseInt(e.target.value) || 60)} className="bg-white/5 border-white/10 text-white" /></div>
+          <div><Label className="text-white/60">{t("ui.meal.duration.min.c486efe")}</Label><Input aria-label={t("ui.meal.duration.min.c486efe")} type="number" value={trip.meal_duration_min ?? 60} onChange={(e) => update("meal_duration_min", parseInt(e.target.value) || 60)} className="bg-white/5 border-white/10 text-white" /></div>
           <div className="flex items-end">
             <label className="flex items-center gap-2 text-sm text-white/70 cursor-pointer pb-2">
-              <input type="checkbox" checked={!!trip.stroller} onChange={(e) => update("stroller", e.target.checked)} className="accent-lime w-4 h-4" />
-              Stroller
-            </label>
+              <input type="checkbox" checked={!!trip.stroller} onChange={(e) => update("stroller", e.target.checked)} className="accent-lime w-4 h-4" />{t("ui.stroller.722f23c")}</label>
           </div>
         </div>
-        <div><Label className="text-white/60">Declared mobility needs</Label><Input value={trip.mobility_needs || ""} onChange={(e) => update("mobility_needs", e.target.value)} placeholder="e.g. avoid stairs" className="bg-white/5 border-white/10 text-white" /></div>
+        <div><Label className="text-white/60">{t("ui.declared.mobility.needs.372a4af")}</Label><Input aria-label={t("ui.declared.mobility.needs.372a4af")} value={trip.mobility_needs || ""} onChange={(e) => update("mobility_needs", e.target.value)} placeholder={t("ui.e.g.avoid.stairs.36f7b49")} className="bg-white/5 border-white/10 text-white" /></div>
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Daily planning hours</h3>
-        <p className="text-xs text-white/60">Set the hours when you'd like activities to be planned each day. Flights and confirmed reservations remain fixed.</p>
+        <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">{t("ui.daily.planning.hours.37b6e48")}</h3>
+        <p className="text-xs text-white/60">{t("ui.set.the.hours.when.you.d.like.activities.to.be.planned.each.day.f.88160c0")}</p>
         <div className="space-y-3">
           {dayWindows.map((dw, idx) => {
             const windows = dw.windows ? JSON.parse(dw.windows) : [];
@@ -165,32 +163,32 @@ export default function StepPreferences({ trip, update, dayWindows, onWindowsCha
                     </div>
                   ))}
                 </div>
-                <button onClick={() => addWindow(idx)} className="mt-2 flex items-center gap-1 text-xs text-lime hover:text-lime/80"><Plus className="w-3 h-3" /> Add interval</button>
+                <button onClick={() => addWindow(idx)} className="mt-2 flex items-center gap-1 text-xs text-lime hover:text-lime/80"><Plus className="w-3 h-3" />{" "}{t("ui.add.interval.1d90d41")}</button>
                 {blocked.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-white/10">
-                    <p className="text-xs text-white/40 mb-1">Unavailable:</p>
+                    <p className="text-xs text-white/40 mb-1">{t("ui.unavailable.730dabe")}</p>
                     {blocked.map((b, bi) => (
                       <div key={bi} className="flex flex-wrap items-center gap-2 mt-2">
-                        <Input aria-label={`Blocked start ${dw.date}`} type="time" value={b.start} onChange={event=>{const next=[...blocked];next[bi]={...b,start:event.target.value};updateWindow(idx,'blocked',JSON.stringify(next));}} className="w-28 bg-white/5 text-white"/>
+                        <Input aria-label={t("ui.blocked.start.value.7cc0cc8", {v0: dw.date})} type="time" value={b.start} onChange={event=>{const next=[...blocked];next[bi]={...b,start:event.target.value};updateWindow(idx,'blocked',JSON.stringify(next));}} className="w-28 bg-white/5 text-white"/>
                         <span className="text-white/60">→</span>
-                        <Input aria-label={`Blocked end ${dw.date}`} type="time" value={b.end} onChange={event=>{const next=[...blocked];next[bi]={...b,end:event.target.value};updateWindow(idx,'blocked',JSON.stringify(next));}} className="w-28 bg-white/5 text-white"/>
-                        <Input aria-label={`Blocked reason ${dw.date}`} value={b.reason||''} onChange={event=>{const next=[...blocked];next[bi]={...b,reason:event.target.value};updateWindow(idx,'blocked',JSON.stringify(next));}} className="flex-1 min-w-24 bg-white/5 text-white"/>
-                        <button aria-label={`Remove blocked interval ${bi+1} on ${dw.date}`} onClick={()=>updateWindow(idx,'blocked',JSON.stringify(blocked.filter((_,i)=>i!==bi)))} className="text-white/60 hover:text-red-300"><Trash2 size={16}/></button>
+                        <Input aria-label={t("ui.blocked.end.value.5bb1cdd", {v0: dw.date})} type="time" value={b.end} onChange={event=>{const next=[...blocked];next[bi]={...b,end:event.target.value};updateWindow(idx,'blocked',JSON.stringify(next));}} className="w-28 bg-white/5 text-white"/>
+                        <Input aria-label={t("ui.blocked.reason.value.7eda562", {v0: dw.date})} value={b.reason||''} onChange={event=>{const next=[...blocked];next[bi]={...b,reason:event.target.value};updateWindow(idx,'blocked',JSON.stringify(next));}} className="flex-1 min-w-24 bg-white/5 text-white"/>
+                        <button aria-label={t("ui.remove.blocked.interval.value.on.value.b1adf66", {v0: bi+1, v1: dw.date})} onClick={()=>updateWindow(idx,'blocked',JSON.stringify(blocked.filter((_,i)=>i!==bi)))} className="text-white/60 hover:text-red-300"><Trash2 size={16}/></button>
                       </div>
                     ))}
                   </div>
                 )}
-                <button onClick={() => addBlocked(idx)} className="mt-1 flex items-center gap-1 text-xs text-white/40 hover:text-white/60"><Plus className="w-3 h-3" /> Block interval</button>
+                <button onClick={() => addBlocked(idx)} className="mt-1 flex items-center gap-1 text-xs text-white/40 hover:text-white/60"><Plus className="w-3 h-3" />{" "}{t("ui.block.interval.19de240")}</button>
               </div>
             );
           })}
         </div>
       </section>
       <section className="space-y-3">
-        <label htmlFor="special-wishes" className="block text-sm font-semibold text-white/80 uppercase tracking-wider">Special wishes</label>
-        <p className="text-sm text-white/60">Anything else TripNexa should consider when suggesting places or building your itinerary?</p>
-        <textarea id="special-wishes" maxLength={4000} rows={5} value={trip.special_wishes || ''} onChange={event => update('special_wishes', event.target.value)} placeholder="Keep one afternoon completely free. Avoid early mornings. Prefer local restaurants." className="w-full rounded-xl border border-white/20 bg-white/5 p-3 text-white" />
-        <p className="text-xs text-white/50">Saved with your preferences. Flights, confirmed reservations and accessibility needs remain protected.</p>
+        <label htmlFor="special-wishes" className="block text-sm font-semibold text-white/80 uppercase tracking-wider">{t("ui.special.wishes.a982e2c")}</label>
+        <p className="text-sm text-white/60">{t("ui.anything.else.tripnexa.should.consider.when.suggesting.places.or.54a0069")}</p>
+        <textarea id="special-wishes" maxLength={4000} rows={5} value={trip.special_wishes || ''} onChange={event => update('special_wishes', event.target.value)} placeholder={t("ui.keep.one.afternoon.completely.free.avoid.early.mornings.prefer.lo.2e13070")} className="w-full rounded-xl border border-white/20 bg-white/5 p-3 text-white" />
+        <p className="text-xs text-white/50">{t("ui.saved.with.your.preferences.flights.confirmed.reservations.and.ac.e1c42c9")}</p>
       </section>
     </div>
   );

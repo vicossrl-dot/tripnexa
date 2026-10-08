@@ -8,5 +8,8 @@ export function providerError(service, { status, code, requestId, cause } = {}) 
   let message;
   if (status === 429) message = 'This service is temporarily busy. Please try again shortly.';
   else message = 'This service is temporarily unavailable. Please try again later or continue planning manually.';
-  return new HttpError(502, message);
+  const error = new HttpError(502, message);
+  // Internal, non-enumerable metadata: preserve the upstream cause without its body/message.
+  Object.defineProperty(error, 'providerFailure', {value: {status: Number.isInteger(status) ? status : null, code: safeCode(code), network}});
+  return error;
 }

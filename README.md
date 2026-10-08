@@ -1,5 +1,9 @@
 # TripSync — aplicație independentă
 
+Itinerarii publice și Trip Examples (6 octombrie 2026): [raport complet, verificări și limite](docs/PUBLIC_ITINERARIES_REPORT.md), [migrare, administrare și previzualizare locală](docs/PUBLIC_ITINERARIES.md). Implementate local în aplicație și website; fără deploy, commit sau push. Migrarea și cele 15 exemple au fost verificate numai în baza separată de test.
+
+Monetizare TripNexa: [implementare și verificări](docs/BILLING_REPORT.md), [Stripe/PayPal și reguli de acces](docs/BILLING_SETUP.md), [staging și rollback](docs/BILLING_DEPLOYMENT.md). Billing rămâne implicit dezactivat până la configurarea și verificarea contului Stripe în staging.
+
 Autentificare Google/Apple și domenii portabile: [configurare socială](docs/SOCIAL_AUTH.md), [domenii, callback-uri și mutarea instalării](docs/DOMAIN_CONFIGURATION.md). Paginile Admin sunt implementate; furnizorii OAuth rămân dezactivați până la configurarea credențialelor. Loginul real Google/Apple nu este încă verificat.
 
 Tours & Tickets: [configurarea GetYourGuide, Viator, Tiqets și Klook](docs/AFFILIATE_TICKETS.md). Interfața și adaptoarele affiliate sunt pregătite local; furnizorii rămân dezactivați până la introducerea linkurilor oficiale din conturile tale în Admin → Revenue.
@@ -157,3 +161,5 @@ Etapa 4 adaugă itinerare complete pe zile, editare/mutare/înlocuire cu salvare
 Fotografiile Google, Special wishes, Change itinerary cu previzualizare, programarea îmbunătățită și exportul PDF A4 sunt descrise în [docs/FUNCTIONAL_POLISH.md](docs/FUNCTIONAL_POLISH.md). Migrarea adaugă numai câmpul opțional special_wishes; CHROME_PATH este opțional pentru export pe alt server.
 
 Lista locurilor neprogramate din Change itinerary, preferințele Food & Dining și restaurantele Google pentru fiecare masă sunt descrise în [docs/FOOD_AND_CHANGE_POLISH.md](docs/FOOD_AND_CHANGE_POLISH.md). Migrarea adaugă trei câmpuri opționale pentru preferințe și `meal_choice`; configurația Google existentă este suficientă. Restaurantul ales se salvează, se păstrează la regenerare și apare în PDF.
+
+Redesignul local TripNexa, navigarea Overview/Update Plan ?i integrarea privat? Bunny sunt documentate ?n [raportul UX/storage](docs/UX_STORAGE_REPORT.md) ?i [ghidul Bunny](docs/BUNNY_STORAGE.md). Schema storage a fost verificat? ?n baze separate de test; activarea ?n produc?ie ?i mutarea fi?ierelor necesit? configurare ?i verificare explicit?.

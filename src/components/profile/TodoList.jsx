@@ -1,3 +1,5 @@
+import { translateText, t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState, useEffect } from "react";
 import { api } from "@/api/client";
 import { Plus, Printer } from "lucide-react";
@@ -18,6 +20,7 @@ const SUGGESTIONS = [
 ];
 
 export default function TodoList() {
+  useLocale();
   const [boards, setBoards] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [todos, setTodos] = useState(null);
@@ -107,26 +110,24 @@ export default function TodoList() {
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={SUGGESTIONS[hintIndex]}
+            placeholder={translateText(SUGGESTIONS[hintIndex])}
             className="h-11 rounded-[12px]"
           />
           <Button type="submit" className="h-11 rounded-[12px] px-4 shrink-0">
-            <Plus className="w-4 h-4 mr-1" /> Add
-          </Button>
+            <Plus className="w-4 h-4 mr-1" />{" "}{t("ui.add.9fd728c")}</Button>
         </form>
       )}
 
       <div className="tripsync-print-area mt-5">
         {open.length === 0 ? (
-          <p className="text-sm text-neutral-400 py-3">Nothing on the list yet — add your first task above.</p>
+          <p className="text-sm text-neutral-400 py-3">{t("ui.nothing.on.the.list.yet.add.your.first.task.above.48d4d72")}</p>
         ) : (
           open.map((t) => <TodoRow key={t.id} todo={t} onToggle={toggle} onDelete={remove} />)
         )}
 
         {done.length > 0 && (
           <div className="mt-6 pt-5 border-t border-neutral-200">
-            <p className="font-mono text-[13px] font-medium uppercase tracking-[0.15em] text-neutral-400 mb-1">
-              Done · {done.length}
+            <p className="font-mono text-[13px] font-medium uppercase tracking-[0.15em] text-neutral-400 mb-1">{t("ui.done.308c27a")}{" "}{done.length}
             </p>
             {done.map((t) => <TodoRow key={t.id} todo={t} onToggle={toggle} onDelete={remove} />)}
           </div>
@@ -139,8 +140,7 @@ export default function TodoList() {
           onClick={() => window.print()}
           className="mt-6 h-11 rounded-[12px] print:hidden"
         >
-          <Printer className="w-4 h-4 mr-2" /> Print list
-        </Button>
+          <Printer className="w-4 h-4 mr-2" />{" "}{t("ui.print.list.080dbd9")}</Button>
       )}
     </div>
   );

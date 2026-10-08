@@ -6,12 +6,13 @@ import { config } from './config.js';
 import { assert } from './errors.js';
 import { digest, secretToken, hashPassword, verifyPassword, normalizeEmail, sessionToken } from './security.js';
 import { sendMail } from './mail.js';
+import {authenticationEmail} from './auth-emails.js';
 import { serialize, validateData } from './schema.js';
 import { privileged } from './admin/permissions.js';
 import { auditRequest } from './admin/audit.js';
 import {runtimeSettings} from './admin/runtime.js';
 import {readSettings} from './admin/settings.js';
-import {getAppUrls,buildPasswordResetUrl,buildEmailVerificationUrl} from './app-urls.js';
+import {getAppUrls} from './app-urls.js';
 
 const cookie = { httpOnly: true, secure: config.production, sameSite: 'lax', path: '/' };
 export async function loadUser(req, _res, next) {
@@ -45,8 +46,8 @@ export async function issueToken(user, kind) {
   const token = kind === 'verify' ? String(randomInt(100000, 1000000)) : secretToken();
   await pool.execute('INSERT INTO auth_tokens (user_id,kind,token_hash,expires_at,attempts) VALUES (?,?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 15 MINUTE),0) ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash),expires_at=VALUES(expires_at),attempts=0', [user.id, kind, digest(`${user.id}:${kind}:${token}`)]);
   const urls=await getAppUrls();
-  const text = kind === 'verify' ? `Your TripNexa verification code: ${token}\nEnter it at ${buildEmailVerificationUrl(urls,user.email)}\nExpires in 15 minutes.` : `Reset your TripNexa password: ${buildPasswordResetUrl(urls,token,user.id)}\nExpires in 15 minutes. Ignore this message if you did not request it.`;
-  await sendMail(user.email, kind === 'verify' ? 'Verify your TripNexa email' : 'Reset your TripNexa password', text);
+  const {subject,text}=authenticationEmail(user,kind,token,urls);
+  await sendMail(user.email,subject,text);
 }
 export const authRouter = Router();
 const authLimit = rateLimit({ windowMs: 15 * 60000, limit: () => Math.min(30,runtimeSettings()?.settings.login_attempt_limit||30), standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many attempts. Please try again in 15 minutes.' } });
@@ -73,7 +74,7 @@ authRouter.post('/register', async (req, res) => {
     return res.json({ verificationRequired: true });
   }
   const user = { id: randomUUID(), email };
-  try { await pool.execute('INSERT INTO users (id,email,password_hash) VALUES (?,?,?)', [user.id, email, passwordHash]); }
+  try { await pool.execute('INSERT INTO users (id,email,password_hash,public_itinerary_eligible) VALUES (?,?,?,?)', [user.id, email, passwordHash, !/(?:@|\.)(?:test|invalid|localhost)$|@example\.(?:com|org|net)$|(?:^|[+._-])(?:test|sample|fixture|demo)(?:[+._-]|@)/i.test(email)]); }
   catch (error) { if (error.code === 'ER_DUP_ENTRY') return res.json({ verificationRequired: true }); throw error; }
   await issueToken(user, 'verify');
   res.status(201).json({ verificationRequired: true });

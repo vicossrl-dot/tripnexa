@@ -1,9 +1,12 @@
+import { useLocale } from "@/i18n/react";
+import { formatAppDate } from "@/i18n/runtime";
 import React, { useState } from "react";
 import { format, parseISO } from "date-fns";
 import MobileDaySection from "./MobileDaySection";
 import RailProgress from "./RailProgress";
 
 export default function MobileDayCarousel({ items, onSelect }) {
+  useLocale();
   const dated = items.filter((i) => i.date).sort((a, b) => (a.date + (a.time || "99")).localeCompare(b.date + (b.time || "99")));
   const days = [...new Set(dated.map((i) => i.date))];
   const extras = items.filter((i) => !i.date);
@@ -14,7 +17,7 @@ export default function MobileDayCarousel({ items, onSelect }) {
     return {
       key: date,
       dayLabel: `Day ${idx + 1}`,
-      heading: `${format(d, "EEEE, MMMM d")}`,
+      heading: `${formatAppDate(d, "EEEE, MMMM d")}`,
       list: dated.filter((i) => i.date === date),
       past: date < today,
       accent: false,

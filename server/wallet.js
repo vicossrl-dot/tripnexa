@@ -7,6 +7,8 @@ import { assert } from './errors.js';
 import { serialize } from './schema.js';
 import { cleanupAfterRemoval } from './file-lifecycle.js';
 import {runtimeSettings} from './admin/runtime.js';
+import {checkWalletCapacity,tripFiles} from './billing/entitlements.js';
+import {billingSettings} from './billing/configuration.js';
 
 const uploadId = url => /^\/api\/uploads\/([a-f0-9-]{36})$/.exec(url || '')?.[1];
 export function attachmentMetadata(input) {
@@ -58,6 +60,7 @@ export async function saveWalletItem(tripId, itemId, body, ownerId) {
   assert(Array.isArray(attachments) && attachments.length <= 100 && Array.isArray(removals) && removals.length <= 100 && removals.every(id => typeof id === 'string'),400,'Use up to 100 attachments per save.');
   const result = await transaction(async db => {
     await owned(db,'Trip',tripId,ownerId,true);
+    const walletBefore=(await billingSettings()).billing_enforcement_enabled?(await tripFiles(db,ownerId,tripId)).size:null;
     let item;
     if (itemId) {
       item = await owned(db,'TripItem',itemId,ownerId,true);
@@ -95,6 +98,7 @@ export async function saveWalletItem(tripId, itemId, body, ownerId) {
       }
     }
     const [count] = await db.execute('SELECT COUNT(*) AS n FROM item_attachments WHERE item_id=?',[item.id]);assert(count[0].n <= 100,400,'Use up to 100 files in one booking.');
+    await checkWalletCapacity(db,ownerId,tripId,{previous:walletBefore});
     const limits=runtimeSettings()?.quotas;if(limits){const [[total]]=await db.execute('SELECT COUNT(*) AS n FROM item_attachments a JOIN trip_items i ON i.id=a.item_id WHERE i.trip_id=?',[tripId]);assert(total.n<=limits.uploads_per_trip,429,'This trip has reached its attachment quota.');}
     return { item:serialize('TripItem',await owned(db,'TripItem',item.id,ownerId)), filesToClean };
   });

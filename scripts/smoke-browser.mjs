@@ -209,11 +209,16 @@ try {
     await evaluate(`(() => { const input=document.getElementById('trip-name'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Smoke trip'); input.dispatchEvent(new Event('input',{bubbles:true})); })()`);
     await new Promise(resolve => setTimeout(resolve, 100));
     await evaluate(`Array.from(document.querySelectorAll('[role="dialog"] button')).find(b=>b.textContent.startsWith("Let's go")).click()`);
-    await waitText('Continue planning');
+    // New trips now enter the existing wizard directly. Keep the overview/reopen
+    // checks below, and assert this current navigation contract explicitly.
+    await waitText('Destination & time');
     const tripId = await evaluate("location.pathname.split('/')[2]");
     assert.match(tripId, /^[a-f0-9-]{36}$/);
-    assert.equal(await evaluate("document.querySelector('[data-travel-background]').getAttribute('data-travel-background')"), 'train');
-    assert(await evaluate("document.querySelector('[data-travel-background] img').getAttribute('src').endsWith('/train.svg')"));
+    assert.equal(await evaluate('location.pathname + location.search'), '/trip/' + tripId + '/plan?step=0');
+    await evaluate(`document.querySelector('a[href="/trip/${tripId}"]').click()`);
+    await waitText('Continue planning');
+    assert(await evaluate("document.querySelector('[data-trip-overview]').textContent.includes('Traveling by Train')"));
+    assert(await evaluate("!!document.querySelector('[data-trip-overview] .overview-scenery')"), 'The current overview retains its photo/neutral scenery region.');
     const initialTrip = await api('/entities/Trip/' + tripId, undefined, 'GET');
     assert.equal(initialTrip.travel_type, 'train');
     if (mockProviders) {
@@ -254,18 +259,17 @@ try {
         for (const [stepName, stepText] of [
           ['Stay', 'Have you booked your stay?'],
           ['Preferences', 'Daily planning hours'],
-          ['Desired places', 'Search a desired place'],
-          ['Suggestions', 'Additional ideas for your trip'],
+          ['Places', 'Search a desired place'],
           ['Itinerary & tickets', 'Build your schedule'],
         ]) {
           for(let pending=0;pending<50;pending++){if(await evaluate(`!document.querySelector('[data-plan-step]').disabled`))break;await new Promise(resolve=>setTimeout(resolve,100));}
-          await evaluate(`Array.from(document.querySelectorAll('header button')).find(b => b.textContent.endsWith(${JSON.stringify(stepName)})).click()`);
+          await evaluate(`Array.from(document.querySelectorAll('[data-plan-step]')).find(b => b.getBoundingClientRect().width > 0 && b.getAttribute('aria-label').split(',')[0]===${JSON.stringify(stepName)}).click()`);
           await waitText(stepText, 'main');
           if (stepName === 'Preferences') {
             await evaluate(`Array.from(document.querySelectorAll('main button')).find(b => b.textContent.trim()==='Nature').click()`);
             await evaluate(`Array.from(document.querySelectorAll('main button')).find(b => b.textContent.trim()==='No museums').click()`);
           }
-          if (stepName === 'Desired places') {
+          if (stepName === 'Places') {
             assert(await evaluate(`Array.from(document.querySelectorAll('main input')).some(input => input.value==='Museum visit')`), 'Saved places should appear in the editor.');
             for (const name of mockProviders ? ['Colosseum', 'Trevi Fountain', 'Colosseum'] : ['Manual garden', 'Manual garden']) {
               await evaluate(`(() => { const input=document.getElementById('desired-place-search'); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(name)}); input.dispatchEvent(new Event('input',{bubbles:true})); })()`);
@@ -285,7 +289,8 @@ try {
             const screenshot = await command('Page.captureScreenshot', { format: 'png' }, sessionId);
             await writeFile('.local/browser-smoke/phase-three-places.png', Buffer.from(screenshot.data, 'base64'));
           }
-          if (stepName === 'Suggestions' && mockProviders) {
+          if (stepName === 'Places' && mockProviders) {
+            await evaluate(`Array.from(document.querySelectorAll('main button')).find(b => b.textContent==='Generate suggestions').click()`);
             await waitText('Your saved places are unchanged');
             await evaluate(`Array.from(document.querySelectorAll('main button')).find(b => b.textContent==='Generate suggestions').click()`);
             await waitText('Villa Borghese');
@@ -307,7 +312,6 @@ try {
             assert.equal(accepted.priority, 'preferred'); assert.equal(accepted.desired_duration_min, 60);
             assert.equal(saved.find(place => place.name === 'Orange Garden').priority, 'excluded');
             await command('Page.navigate', { url: root + route }, sessionId);
-            await waitText('No additional matching places');
             await waitText('Accepted'); await waitText('Rejected');
             const screenshot = await command('Page.captureScreenshot', { format: 'png' }, sessionId);
             await writeFile('.local/browser-smoke/phase-three-suggestions.png', Buffer.from(screenshot.data, 'base64'));
@@ -341,6 +345,8 @@ try {
     await evaluate(`Array.from(document.querySelectorAll('a')).find(a=>a.textContent==='Trips').click()`);
     await waitText('Your Trips');
     await waitText('Phase Four Trip');
+    await evaluate(`document.querySelector('a[href="/trip/${fourth.id}"]').click()`);
+    await waitText('Trip at a glance');
     await evaluate(`document.querySelector('a[href="/trip/${fourth.id}/itinerary"]').click()`);
     await waitText('Your itinerary');
     const editButtons = `Array.from(document.querySelectorAll('button')).filter(b=>b.textContent==='Edit / move / replace' && b.getBoundingClientRect().width>0)`;

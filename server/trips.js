@@ -1,3 +1,7 @@
+import {billableOperation} from './billing/usage.js';
+import {translateSavedTexts,generatedTexts} from './localized-content.js';
+import {checkWalletCapacity,tripFiles} from './billing/entitlements.js';
+import {billingSettings} from './billing/configuration.js';
 import { mealChoice } from '../src/lib/dining.js';
 import {readSettings} from './admin/settings.js';
 import { Router } from 'express';
@@ -12,6 +16,9 @@ import { checkPrivateFiles } from './uploads.js';
 import { previewChanges, applyChanges } from './itinerary-changes.js';
 import { exportItineraryPdf } from './itinerary-pdf.js';
 import {getAppUrls,buildShareUrl} from './app-urls.js';
+import {queuePublicItinerary} from './public-itineraries/queue.js';
+import {interactiveMapConfiguration} from './interactive-maps.js';
+import {getTripWeather} from './weather/api.js';
 
 export function publicProjection(trip, items) {
   const fields = ['name', 'destination', 'country', 'start_date', 'end_date', 'timezone', 'currency', 'plan_status', 'last_validated_at'];
@@ -39,7 +46,10 @@ export async function getSharedTrip(req, res) {
   assert(trips[0], 404, 'Trip not found or sharing disabled.');
   const [items] = await pool.execute('SELECT * FROM itinerary_items WHERE trip_id=? ORDER BY date,sort_order', [trips[0].id]);
   const all=await readSettings();
-  res.set('Cache-Control', 'no-store').json({...publicProjection(trips[0], items),affiliate_enabled:!!(all.features.referral_links&&all.settings.affiliate_public_enabled&&all.settings.affiliate_disclosure_text.trim())});
+  const projection=publicProjection(trips[0],items);
+  // Public readers see only the existing public projection and already cached translations.
+  const displayTranslations=await translateSavedTexts(generatedTexts(projection),{owner:trips[0].owner_id,generate:false});
+  res.set('Cache-Control', 'no-store').json({...projection,displayTranslations,affiliate_enabled:!!(all.features.referral_links&&all.settings.affiliate_public_enabled&&all.settings.affiliate_disclosure_text.trim())});
 }
 export const tripRouter = Router();
 tripRouter.get('/:id/share-url',async(req,res)=>{const trip=await owned(pool,'Trip',req.params.id,req.user.id);res.json({url:trip.share_enabled&&trip.share_token?buildShareUrl(await getAppUrls(),trip.share_token):null});});
@@ -49,6 +59,7 @@ tripRouter.put('/:id/planning/:collection', async (req, res) => {
   assert(Array.isArray(req.body.items) && req.body.items.length <= 1000, 400, 'Expected up to 1000 items.');
   const result = await transaction(async db => {
     await owned(db, 'Trip', req.params.id, req.user.id, true);
+    const walletBefore=(await billingSettings()).billing_enforcement_enabled?(await tripFiles(db,req.user.id,req.params.id)).size:null;
     const table = entityTable(name);
     const stayClause = name === 'TripItem' ? " AND category='stay'" : '';
     const [existing] = await db.execute(`SELECT * FROM ${table} WHERE trip_id=? AND owner_id=?${stayClause}`, [req.params.id, req.user.id]);
@@ -73,6 +84,8 @@ tripRouter.put('/:id/planning/:collection', async (req, res) => {
     if (name !== 'TripItem') for (const row of existing) {
       if (!kept.has(row.id)) await db.execute(`DELETE FROM ${table} WHERE id=? AND owner_id=?`, [row.id, req.user.id]);
     }
+    await checkWalletCapacity(db,req.user.id,req.params.id,{previous:walletBefore});
+    await queuePublicItinerary(db,req.params.id);
     return result;
   });
   res.json(result);
@@ -89,9 +102,11 @@ tripRouter.post('/:id/share', async (req, res) => {
   res.json(trip);
 });
 tripRouter.get('/:id/itinerary', async (req, res) => res.json(await readItinerary(req.params.id, req.user.id)));
+tripRouter.get('/:id/interactive-map', async (req, res) => res.json(await interactiveMapConfiguration(req.user.id, req.params.id)));
+tripRouter.get('/:id/weather', getTripWeather);
 const itineraryLimit = rateLimit({ windowMs: 60000, limit: 10, keyGenerator: req => req.user.id, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Please wait a minute before generating another itinerary.' } });
-tripRouter.post('/:id/itinerary', itineraryLimit, async (req, res) => res.json(await generateItinerary(req.params.id, req.user.id, req.body || {})));
+tripRouter.post('/:id/itinerary', itineraryLimit, async (req, res) => res.json(await (req.body?.use_ai===true?billableOperation(req.user.id,req.params.id,'ai_generations',()=>generateItinerary(req.params.id,req.user.id,req.body)):generateItinerary(req.params.id,req.user.id,req.body||{}))));
 tripRouter.post('/:id/itinerary/edit', async (req, res) => res.json(await editItinerary(req.params.id, req.user.id, req.body || {})));
-tripRouter.post('/:id/itinerary/preview', itineraryLimit, async(req,res)=>res.json(await previewChanges(req.params.id,req.user.id,req.body||{})));
+tripRouter.post('/:id/itinerary/preview', itineraryLimit, async(req,res)=>res.json(await billableOperation(req.user.id,req.params.id,'ai_modifications',()=>previewChanges(req.params.id,req.user.id,req.body||{}))));
 tripRouter.post('/:id/itinerary/apply',async(req,res)=>res.json(await applyChanges(req.params.id,req.user.id,req.body?.token)));
-tripRouter.get('/:id/itinerary/pdf',itineraryLimit,async(req,res)=>res.set({'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="TripNexa-itinerary.pdf"','Cache-Control':'no-store'}).send(await exportItineraryPdf(req.params.id,req.user.id)));
+tripRouter.get('/:id/itinerary/pdf',itineraryLimit,async(req,res)=>res.set({'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="TripNexa-itinerary.pdf"','Cache-Control':'no-store'}).send(await billableOperation(req.user.id,req.params.id,'pdf_exports',()=>exportItineraryPdf(req.params.id,req.user.id))));

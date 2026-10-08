@@ -1,9 +1,12 @@
+import { formatAppDate } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Plane } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 
 export default function HeaderTripInfo({ items, trip, show }) {
+  useLocale();
   const dates = (items || []).filter((i) => i.date).map((i) => i.date).sort();
   const endDates = (items || []).flatMap((i) => [i.date, i.end_date].filter(Boolean)).sort();
   const start = dates[0];
@@ -24,9 +27,9 @@ export default function HeaderTripInfo({ items, trip, show }) {
           </span>
           {start && end && (
             <span className="flex items-center gap-2 text-white">
-              <span className="font-heading font-medium text-sm tabular-nums">{format(parseISO(start), "dd MMM").toUpperCase()}</span>
+              <span className="font-heading font-medium text-sm tabular-nums">{formatAppDate(parseISO(start), "dd MMM").toUpperCase()}</span>
               <Plane className="w-3.5 h-3.5 text-white/40" />
-              <span className="font-heading font-medium text-sm tabular-nums">{format(parseISO(end), "dd MMM").toUpperCase()}</span>
+              <span className="font-heading font-medium text-sm tabular-nums">{formatAppDate(parseISO(end), "dd MMM").toUpperCase()}</span>
             </span>
           )}
         </motion.div>

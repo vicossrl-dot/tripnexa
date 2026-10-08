@@ -1,3 +1,5 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState } from "react";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
@@ -6,6 +8,7 @@ import {
 import { api } from "@/api/client";
 
 export default function DeleteTripDialog({ trip, open, onClose, onDeleted }) {
+  useLocale();
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -27,19 +30,17 @@ export default function DeleteTripDialog({ trip, open, onClose, onDeleted }) {
     <AlertDialog open={open} onOpenChange={(o) => !o && onClose()}>
       <AlertDialogContent className="rounded-2xl w-[calc(100%-30px)] max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete "{trip.name}"?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will permanently delete the trip and everything saved inside it. This can't be undone.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{t("ui.delete.7613fa5")}{trip.name}"?</AlertDialogTitle>
+          <AlertDialogDescription>{t("ui.this.will.permanently.delete.the.trip.and.everything.saved.inside.fd4159a")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleting}>{t("ui.cancel.19766ed")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => { e.preventDefault(); handleDelete(); }}
             disabled={deleting}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
-            {deleting ? "Deleting…" : "Delete Trip"}
+            {deleting ? t("ui.deleting.43b5894") : t("ui.delete.trip.d8ee104")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

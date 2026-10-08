@@ -1,14 +1,17 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 import { getCategory } from "./categories";
 
 export default function MobileQuickLinks({ items, onSelect }) {
+  useLocale();
   const quick = items.filter((i) => ["flight", "stay", "document"].includes(i.category));
   if (quick.length === 0) return null;
   return (
     <div className="lg:hidden fixed bottom-0 inset-x-0 z-30">
       <div className="bg-lime/90 backdrop-blur-xl border-t border-white/40 rounded-t-3xl shadow-2xl px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
         <div className="px-1.5 mb-2">
-          <span className="text-sm font-medium text-neutral-900">Quick Links</span>
+          <span className="text-sm font-medium text-neutral-900">{t("ui.quick.links.62b3499")}</span>
         </div>
         <div className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {quick.map((item) => {

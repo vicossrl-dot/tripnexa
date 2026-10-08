@@ -218,6 +218,10 @@
     "share_enabled": {
       "type": "boolean"
     },
+    "share_public_itinerary": {
+      "type": "boolean",
+      "default": true
+    },
     "share_hide_stay": {
       "type": "boolean"
     },

@@ -2,6 +2,10 @@
   "name": "User",
   "type": "object",
   "properties": {
+    "ui_locale": {
+      "type": "string",
+      "enum": ["en", "ro", "ru", "de", "fr", "es"]
+    },
     "display_name": {
       "type": "string"
     },

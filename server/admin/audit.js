@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { pool } from '../db.js';
 import { assert } from '../errors.js';
 
-export const redactText = value => String(value || '').replace(/(?:sk-[\w-]+|Bearer\s+\S+|[a-f0-9]{64}|(?:password|secret|token|api[_ -]?key)\s*[:=]\s*\S+)/gi, '[redacted]').slice(0,500);
+export const redactText = value => String(value || '').replace(/(?:(?:sk|rk|pk)_(?:test|live)_[\w]+|whsec_[\w]+|sk-[\w-]+|Bearer\s+\S+|[a-f0-9]{64}|(?:password|secret|token|api[_ -]?key)\s*[:=]\s*\S+)/gi, '[redacted]').slice(0,500);
 export function actionReason(body, confirmation) {
   assert(typeof body?.reason === 'string' && body.reason.trim().length >= 5 && body.reason.length <= 500, 400, 'Provide a reason (5–500 characters). Do not include confidential information.');
   assert(body.confirmation === confirmation, 400, `Type ${confirmation} to confirm this action.`);

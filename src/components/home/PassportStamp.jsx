@@ -1,7 +1,10 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 
 // Passport-style ink stamp shown over trips that already ended
 export default function PassportStamp({ date }) {
+  useLocale();
   const year = date ? new Date(date).getFullYear() : "";
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
@@ -21,12 +24,12 @@ export default function PassportStamp({ date }) {
         <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeWidth="3" />
         <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" strokeWidth="1.5" />
         <text fill="currentColor" fontSize="11" fontWeight="800" letterSpacing="3" fontFamily="var(--font-heading)">
-          <textPath href="#stamp-arc-top" startOffset="50%" textAnchor="middle">TRIPNEXA</textPath>
+          <textPath href="#stamp-arc-top" startOffset="50%" textAnchor="middle">{t("ui.tripnexa.7354485")}</textPath>
         </text>
         <text fill="currentColor" fontSize="9" fontWeight="700" letterSpacing="2" fontFamily="var(--font-heading)">
           <textPath href="#stamp-arc-bottom" startOffset="50%" textAnchor="middle">✈ ✈ ✈</textPath>
         </text>
-        <text x="60" y="57" textAnchor="middle" fill="currentColor" fontSize="12" fontWeight="900" letterSpacing="1.5" fontFamily="var(--font-heading)">COMPLETED</text>
+        <text x="60" y="57" textAnchor="middle" fill="currentColor" fontSize="12" fontWeight="900" letterSpacing="1.5" fontFamily="var(--font-heading)">{t("ui.completed.c48179f")}</text>
         <text x="60" y="72" textAnchor="middle" fill="currentColor" fontSize="10" fontWeight="700" letterSpacing="1" fontFamily="var(--font-heading)">{year}</text>
       </svg>
     </div>

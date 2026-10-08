@@ -153,13 +153,13 @@ try {
   assert.equal(await evaluate(`document.querySelector('[aria-label="Preview Confirmation / reference"]').value`),'TEST-ONLY-4821');await clickText('Discard preview');await passed('Real OpenAI screenshot extraction');
   // Restore a real hotel for the practical AI suggestions test.
   await choose('#stay-hotel','Hotel Barcelona Universal','Barcelona Universal');
-  await step('Desired places','Search a desired place');
+  await step('Places','Search a desired place');
   for(const query of ['Sagrada','Park Guell','Sagrada'])await choose('#desired-place-search',query,query==='Sagrada'?'Sagrada':'Güell');
   await text('already in your list');await delay(900);
   const places=await api('/entities/PlaceSelection?filter='+encodeURIComponent(JSON.stringify({trip_id:tripId})),undefined,'GET');
   assert.equal(places.length,2);assert(places.every(place=>place.place_id&&place.country&&place.lat));
   await passed('Desired places: Sagrada Familia, Park Güell, duplicate prevention and persistence');
-  await step('Suggestions','Additional activities');await wait(`document.querySelectorAll('[data-suggestion-card]').length>0`,140000);
+  await step('Places','Additional activities');await click('Generate suggestions');await wait(`document.querySelectorAll('[data-suggestion-card]').length>0`,140000);
   const titles=await evaluate(`[...document.querySelectorAll('[data-suggestion-card] h3')].map(el=>el.textContent)`);
   assert(titles.length>0);assert(titles.every(name=>!places.some(place=>samePlace(place,{name}))));assert.equal(new Set(titles.map(name=>name.toLowerCase())).size,titles.length);
   const cards=await evaluate(`[...document.querySelectorAll('[data-suggestion-card]')].map(el=>({name:el.querySelector('h3').textContent,category:el.querySelectorAll('p')[1].textContent.split(' · ')[0]}))`);

@@ -1,4 +1,6 @@
 "use client"
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
@@ -15,21 +17,18 @@ const DialogPortal = DialogPrimitive.Portal
 const DialogClose = DialogPrimitive.Close
 
 /** @type {React.ForwardRefRenderFunction<React.ElementRef<typeof DialogPrimitive.Overlay>, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>>} */
-const renderDialogOverlay = ({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
+const renderDialogOverlay = ({ className, ...props }, ref) => { useLocale(); return (<DialogPrimitive.Overlay
     ref={ref}
     className={cn(
       "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
-    {...props} />
-)
+    {...props} />); }
 const DialogOverlay = React.forwardRef(renderDialogOverlay)
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 /** @type {React.ForwardRefRenderFunction<React.ElementRef<typeof DialogPrimitive.Content>, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>>} */
-const renderDialogContent = ({ className, children, ...props }, ref) => (
-  <DialogPortal>
+const renderDialogContent = ({ className, children, ...props }, ref) => { useLocale(); return (<DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
@@ -42,11 +41,10 @@ const renderDialogContent = ({ className, children, ...props }, ref) => (
       <DialogPrimitive.Close
         className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
         <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
+        <span className="sr-only">{t("ui.close.7d9eb7a")}</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
-  </DialogPortal>
-)
+  </DialogPortal>); }
 const DialogContent = React.forwardRef(renderDialogContent)
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
@@ -54,41 +52,33 @@ DialogContent.displayName = DialogPrimitive.Content.displayName
 const DialogHeader = ({
   className,
   ...props
-}) => (
-  <div
+}) => { useLocale(); return (<div
     className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
-    {...props} />
-)
+    {...props} />); }
 DialogHeader.displayName = "DialogHeader"
 
 /** @param {React.HTMLAttributes<HTMLDivElement>} props */
 const DialogFooter = ({
   className,
   ...props
-}) => (
-  <div
+}) => { useLocale(); return (<div
     className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
-    {...props} />
-)
+    {...props} />); }
 DialogFooter.displayName = "DialogFooter"
 
 /** @type {React.ForwardRefRenderFunction<React.ElementRef<typeof DialogPrimitive.Title>, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>>} */
-const renderDialogTitle = ({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
+const renderDialogTitle = ({ className, ...props }, ref) => { useLocale(); return (<DialogPrimitive.Title
     ref={ref}
     className={cn("text-lg font-semibold leading-none tracking-tight", className)}
-    {...props} />
-)
+    {...props} />); }
 const DialogTitle = React.forwardRef(renderDialogTitle)
 DialogTitle.displayName = DialogPrimitive.Title.displayName
 
 /** @type {React.ForwardRefRenderFunction<React.ElementRef<typeof DialogPrimitive.Description>, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>>} */
-const renderDialogDescription = ({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
+const renderDialogDescription = ({ className, ...props }, ref) => { useLocale(); return (<DialogPrimitive.Description
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
-    {...props} />
-)
+    {...props} />); }
 const DialogDescription = React.forwardRef(renderDialogDescription)
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 

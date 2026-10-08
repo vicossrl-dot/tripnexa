@@ -1,8 +1,11 @@
+import { t, translateText, getLocale } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 ﻿import {useEffect,useState,useRef} from 'react';
 import {Link} from 'react-router-dom';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import AddItemModal from '@/components/trip/AddItemModal';
 import {api} from '@/api/client';
+import './ticket-options.css';
 
 export async function ticketApi(path,body=undefined){
  const requestUrl='/api'+path+(body?'':(path.includes('?')?'&':'?')+'_fresh='+Date.now());
@@ -11,6 +14,7 @@ export async function ticketApi(path,body=undefined){
   method:body?'POST':'GET',
   headers:{
    'X-Requested-With':'TripSync',
+   'X-TripNexa-Locale':getLocale(),
    ...(body?{'Content-Type':'application/json'}:{})
   },
   ...(body?{body:JSON.stringify(body)}:{})
@@ -30,6 +34,7 @@ export default function TicketOptions({
  publicToken=null,
  onBooking=undefined
 }){
+  const locale=useLocale();
  const trigger=useRef(null);
 
  const [data,setData]=useState(null);
@@ -70,7 +75,7 @@ export default function TicketOptions({
    });
 
   return()=>{active=false;};
- },[base,onBooking]);
+ },[base,onBooking,locale]);
 
  async function mark(booked){
   setBusy(true);
@@ -113,7 +118,7 @@ export default function TicketOptions({
 
  if(!data)
   return error&&!publicToken
-   ? <button className="trip-link text-sm mt-3" onClick={load}>Retry ticket options</button>
+   ? <button className="trip-link text-sm mt-3" onClick={load}>{t("ui.retry.ticket.options.b1c0aad")}</button>
    : null;
 
  if(
@@ -134,17 +139,15 @@ export default function TicketOptions({
 
    {saved?
     <div>
-     <p className="text-emerald-300 text-sm">Ticket saved ✓</p>
+     <p className="text-emerald-300 text-sm">{t("ui.ticket.saved.d074249")}</p>
      <Link
       className="trip-button primary mt-2"
       to={`/trip/${trip.id}/wallet?item=${data.booking.wallet_item_id}`}
-     >
-      View ticket
-     </Link>
+     >{t("ui.view.ticket.631ad74")}</Link>
     </div>
     :
     booked?
-     <p className="text-emerald-300 text-sm">Booked · saved in your plan</p>
+     <p className="text-emerald-300 text-sm">{t("ui.booked.saved.in.your.plan.324e8bf")}</p>
      :
      null
    }
@@ -158,7 +161,7 @@ export default function TicketOptions({
       load();
      }}
     >
-     {saved||booked?'Find another option':'Tickets & tours'}
+     {saved||booked?t("ui.find.another.option.2ef7dad"):t("ui.tickets.tours.67b8c6a")}
     </button>
    }
 
@@ -167,9 +170,7 @@ export default function TicketOptions({
      disabled={busy}
      className="trip-button secondary"
      onClick={addTicket}
-    >
-     Add your ticket to Travel Wallet
-    </button>
+    >{t("ui.add.your.ticket.to.travel.wallet.f382735")}</button>
    }
 
    <Dialog open={open} onOpenChange={setOpen}>
@@ -178,13 +179,11 @@ export default function TicketOptions({
       event.preventDefault();
       trigger.current?.focus();
      }}
-     className="bg-neutral-950 text-white border-white/15 w-[calc(100%-2rem)] max-w-2xl max-h-[90dvh] overflow-y-auto"
+     className="ticket-options-modal bg-neutral-950 text-white border-white/15 w-[calc(100%-2rem)] max-w-2xl max-h-[90dvh] overflow-y-auto"
     >
-     <DialogTitle>Tickets & tours</DialogTitle>
+     <DialogTitle>{t("ui.tickets.tours.67b8c6a")}</DialogTitle>
 
-     <DialogDescription className="text-white/65">
-      Compare options from trusted booking partners. Booking and payment take place on their website.
-     </DialogDescription>
+     <DialogDescription className="text-white/65">{t("ui.compare.options.from.trusted.booking.partners.booking.and.payment.bac0c3e")}</DialogDescription>
 
      <div>
       <h3 className="text-xl font-semibold break-words">
@@ -197,21 +196,17 @@ export default function TicketOptions({
      </div>
 
      {saved&&
-      <p className="text-emerald-300">
-       You already have a ticket saved for this visit.
-      </p>
+      <p className="text-emerald-300">{t("ui.you.already.have.a.ticket.saved.for.this.visit.3c7d90f")}</p>
      }
 
      {error&&
       <p role="alert" className="text-red-300">
-       {error}
+       {translateText(error)}
       </p>
      }
 
      {!hasAnyOption&&
-      <p role="status">
-       Ticket options are temporarily unavailable.
-      </p>
+      <p role="status">{t("ui.ticket.options.are.temporarily.unavailable.53a0682")}</p>
      }
 
      <div className="grid gap-3 sm:grid-cols-2">
@@ -235,15 +230,14 @@ export default function TicketOptions({
 
            <p className="text-sm text-white/60 mt-1">
             {multi&&p.venue_name
-             ? `Tickets for ${p.venue_name}`
+             ? t("ui.tickets.for.value.3849507", {v0: p.venue_name})
              : p.description}
            </p>
           </div>
 
           {multi&&
            <span className="text-xs text-white/45 whitespace-nowrap">
-            {items.length} options
-           </span>
+            {items.length}{" "}{t("ui.options.a793ab8")}</span>
           }
          </div>
 
@@ -257,12 +251,11 @@ export default function TicketOptions({
              >
               <div className="flex-1">
                <p className="font-medium text-sm leading-snug">
-                {ticket.title}
+                {translateText(ticket.title)}
                </p>
 
                {ticket.price_label&&
-                <p className="text-sm text-white/70 mt-2">
-                 From {ticket.price_label}
+                <p className="text-sm text-white/70 mt-2">{t("ui.from.2181976")}{" "}{ticket.price_label}
                 </p>
                }
               </div>
@@ -272,11 +265,9 @@ export default function TicketOptions({
                target="_blank"
                rel="sponsored noopener noreferrer"
                className="trip-button primary mt-3 w-full"
-               aria-label={`${ticket.title} on ${p.name} (opens in a new tab)`}
+               aria-label={t("ui.value.on.value.opens.in.a.new.tab.d3c906c", {v0: ticket.title, v1: p.name})}
                onClick={()=>recordClick(p.provider)}
-              >
-               View ticket ↗
-              </a>
+              >{t("ui.view.ticket.2c4d900")}</a>
              </div>
             ))}
            </div>
@@ -287,11 +278,9 @@ export default function TicketOptions({
              target="_blank"
              rel="sponsored noopener noreferrer"
              className="trip-button secondary mt-3 w-full"
-             aria-label={`View all ${p.venue_name||data.context.name} tickets on ${p.name} (opens in a new tab)`}
+             aria-label={t("ui.view.all.value.tickets.on.value.opens.in.a.new.tab.6bfa600", {v0: p.venue_name||data.context.name, v1: p.name})}
              onClick={()=>recordClick(p.provider)}
-            >
-             View all {p.venue_name||data.context.name} tickets ↗
-            </a>
+            >{t("ui.view.all.30a6421")}{" "}{p.venue_name||data.context.name}{" "}{t("ui.tickets.4bd9060")}</a>
            }
           </>
           :
@@ -301,14 +290,12 @@ export default function TicketOptions({
             target="_blank"
             rel="sponsored noopener noreferrer"
             className="trip-button primary mt-4 w-full"
-            aria-label={`View ${p.name} options (opens in a new tab)`}
+            aria-label={t("ui.view.value.options.opens.in.a.new.tab.ee5a2f7", {v0: p.name})}
             onClick={()=>recordClick(p.provider)}
-           >
-            View options ↗
-           </a>
+           >{t("ui.view.options.6f9603a")}</a>
            :
            <p className="text-sm mt-3">
-            {p.message}
+            {translateText(p.message)}
            </p>
          }
         </article>
@@ -324,43 +311,34 @@ export default function TicketOptions({
         href={data.disclosure_url}
         target="_blank"
         rel="noopener noreferrer"
-       >
-        Affiliate disclosure
-       </a>
+       >{t("ui.affiliate.disclosure.15ed514")}</a>
       }
      </p>
 
      {!publicToken&&
       <div className="border-t border-white/15 pt-4 space-y-3">
-       <h4 className="font-semibold">
-        Already booked?
-       </h4>
+       <h4 className="font-semibold">{t("ui.already.booked.7e72523")}</h4>
 
        <button
         disabled={busy}
-        className="trip-button secondary w-full"
+        className="trip-button primary w-full"
         onClick={addTicket}
-       >
-        Add your ticket to Travel Wallet
-       </button>
+       >{t("ui.add.your.ticket.to.travel.wallet.f382735")}</button>
 
-       <label className="block text-sm">
-        Booked with (optional)
-
-        <select
+       <label className="block text-sm">{t("ui.booked.with.optional.6838684")}<select
          className="block w-full bg-neutral-900 border border-white/20 rounded-lg p-3 mt-1"
          value={provider}
          onChange={e=>setProvider(e.target.value)}
         >
          {[
-          ['other','Other'],
-          ['getyourguide','GetYourGuide'],
-          ['viator','Viator'],
-          ['tiqets','Tiqets'],
-          ['klook','Klook']
+          ["other","Other"],
+          ["getyourguide","GetYourGuide"],
+          ["viator","Viator"],
+          ["tiqets","Tiqets"],
+          ["klook","Klook"]
          ].map(([id,name])=>
           <option key={id} value={id}>
-           {name}
+           {translateText(name)}
           </option>
          )}
         </select>
@@ -373,23 +351,19 @@ export default function TicketOptions({
          onClick={()=>mark(!data.booking?.declared)}
         >
          {data.booking?.declared
-          ? 'Remove my booked mark'
-          : 'Mark as booked'}
+          ? t("ui.remove.my.booked.mark.5c858fc")
+          : t("ui.mark.as.booked.d2f1985")}
         </button>
        }
 
-       <p className="text-xs text-white/50">
-        This records your declaration. TripNexa does not verify purchases.
-       </p>
+       <p className="text-xs text-white/50">{t("ui.this.records.your.declaration.tripnexa.does.not.verify.purchases.b12ebc8")}</p>
       </div>
      }
 
      <button
       className="trip-button secondary"
       onClick={()=>setOpen(false)}
-     >
-      Close
-     </button>
+     >{t("ui.close.7d9eb7a")}</button>
 
     </DialogContent>
    </Dialog>

@@ -5,3 +5,9 @@ export function safeReturnTo() {
   return url.origin === window.location.origin && !url.pathname.startsWith("//")
     ? url.pathname + url.search : "/";
 }
+export async function resumeReturnTo(){
+  const requested=safeReturnTo();
+  if(requested!=='/')return requested;
+  try{const response=await fetch('/api/public-itineraries/intent',{credentials:'same-origin'});if(response.ok){const data=await response.json();if(/^\/customize\/[a-f0-9-]{36}$/.test(data.returnTo))return data.returnTo;}}catch{}
+  return '/';
+}

@@ -8,6 +8,10 @@ import { secretToken } from './security.js';
 import { checkPrivateFiles } from './uploads.js';
 import { walletFilesForRemoval, cleanupAfterRemoval } from './file-lifecycle.js';
 import {runtimeSettings} from './admin/runtime.js';
+import {consumeTripCreation,checkWalletCapacity,tripFiles} from './billing/entitlements.js';
+import {billingSettings} from './billing/configuration.js';
+import {queuePublicItinerary} from './public-itineraries/queue.js';
+import {recordEvent} from './admin/telemetry.js';
 
 export async function owned(db, name, id, ownerId, lock = false) {
   assert(typeof id === 'string' && id.length <= 64, 400, 'Invalid record ID.');
@@ -35,6 +39,9 @@ async function checkParent(db, name, data, ownerId) {
   }
 }
 export async function insertRecord(db, name, input, ownerId, options = {}) {
+  // Lock before INSERT acquires the foreign-key shared user lock. This also
+  // covers imports and callers outside an HTTP runtime-policy context.
+  if(name==='Trip')await db.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[ownerId]);
   const settings=runtimeSettings();
   if(name==='Trip'&&settings){await db.execute('SELECT id FROM users WHERE id=? FOR UPDATE',[ownerId]);const [[count]]=await db.execute('SELECT COUNT(*) AS n FROM trips WHERE owner_id=?',[ownerId]);assert(count.n<settings.quotas.trips_per_user,429,'Your trip limit has been reached.');}
   const data = validateData(name, input, false, options.internal);
@@ -43,6 +50,9 @@ export async function insertRecord(db, name, input, ownerId, options = {}) {
   if (name === 'Trip' && data.share_enabled && !data.share_token) data.share_token = secretToken();
   const keys = Object.keys(data);
   await db.execute(`INSERT INTO ${entityTable(name)} (id,owner_id,${keys.map(k => `\`${k}\``).join(',')}) VALUES (${Array(keys.length + 2).fill('?').join(',')})`, [id, ownerId, ...Object.values(data)]);
+  if(name==='Trip')await consumeTripCreation(db,ownerId,id);
+  if(name==='TripItem')await checkWalletCapacity(db,ownerId,data.trip_id);
+  if(name==='Trip'||['TripItem','PlaceSelection','DayWindow','ItineraryItem'].includes(name))await queuePublicItinerary(db,name==='Trip'?id:data.trip_id);
   return serialize(name, await owned(db, name, id, ownerId));
 }
 export function querySpec(name, query, ownerId) {
@@ -89,6 +99,12 @@ entityRouter.post('/:entity', async (req, res) => {
   res.status(201).json(row);
 });
 export async function updateRecord(db, entity, id, input, ownerId) {
+    let walletBefore=null,tripId=null;
+    if(entity==='Trip'||entity==='TripItem'){
+      tripId=entity==='Trip'?id:(await owned(db,entity,id,ownerId)).trip_id;
+      await owned(db,'Trip',tripId,ownerId,true);
+      if((await billingSettings()).billing_enforcement_enabled)walletBefore=(await tripFiles(db,ownerId,tripId)).size;
+    }
     const previous = await owned(db, entity, id, ownerId, true);
     const data = validateData(entity, input, true);
     for (const key of ['trip_id', 'board_id']) {
@@ -102,11 +118,24 @@ export async function updateRecord(db, entity, id, input, ownerId) {
     if (entity === 'Trip' && data.share_enabled && !previous.share_token) data.share_token = secretToken();
     const keys = Object.keys(data);
     if (keys.length) await db.execute(`UPDATE ${entityTable(entity)} SET ${keys.map(k => `\`${k}\`=?`).join(',')} WHERE id=? AND owner_id=?`, [...Object.values(data), id, ownerId]);
+    if(tripId)await checkWalletCapacity(db,ownerId,tripId,{previous:walletBefore});
+    if(entity==='Trip'&&['start_date','end_date'].some(key=>Object.hasOwn(data,key))){const {materializePublicTemplate}=await import('./public-itineraries/copy.js');await materializePublicTemplate(db,id,ownerId);}
+    const before=serialize(entity,previous);
+    const publicChange=keys.some(key=>!(entity==='Trip'&&['planning_step','share_enabled','share_hide_stay'].includes(key))&&data[key]!==before[key]);
+    if(publicChange&&(entity==='Trip'||['TripItem','PlaceSelection','DayWindow','ItineraryItem'].includes(entity)))await queuePublicItinerary(db,entity==='Trip'?id:previous.trip_id);
     return serialize(entity, await owned(db, entity, id, ownerId));
 }
 entityRouter.patch('/:entity/:id', async (req, res) => {
   const { entity, id } = req.params;
-  const row = await transaction(db => updateRecord(db, entity, id, req.body, req.user.id));
+  let sharingChanged=false;
+  const row = await transaction(async db => {
+    if(entity==='Trip'&&typeof req.body.share_public_itinerary==='boolean'){
+      const previous=await owned(db,'Trip',id,req.user.id,true);
+      sharingChanged=Boolean(previous.share_public_itinerary)!==req.body.share_public_itinerary;
+    }
+    return updateRecord(db, entity, id, req.body, req.user.id);
+  });
+  if(sharingChanged)void recordEvent('share_public_itinerary_toggle',null);
   res.json(row);
 });
 async function unlinkPlaces(db, ids, ownerId) {
@@ -114,7 +143,8 @@ async function unlinkPlaces(db, ids, ownerId) {
 }
 entityRouter.delete('/:entity/:id', async (req, res) => {
   const files = await transaction(async db => {
-    await owned(db, req.params.entity, req.params.id, req.user.id, true);
+    const previous=await owned(db, req.params.entity, req.params.id, req.user.id, true);
+    if(previous.trip_id)await queuePublicItinerary(db,previous.trip_id);
     const files = await walletFilesForRemoval(db, req.params.entity, [req.params.id], req.user.id);
     if (req.params.entity === 'TripItem') await unlinkPlaces(db, [req.params.id], req.user.id);
     await db.execute(`DELETE FROM ${entityTable(req.params.entity)} WHERE id=? AND owner_id=?`, [req.params.id, req.user.id]);
@@ -127,7 +157,8 @@ entityRouter.delete('/:entity', async (req, res) => {
   const q = querySpec(req.params.entity, req.query, req.user.id);
   assert(Object.keys(q.filters).length, 400, 'A filter is required for bulk deletion.');
   const result = await transaction(async db => {
-    const [matching] = await db.execute(`SELECT id FROM ${entityTable(req.params.entity)} WHERE ${q.where} FOR UPDATE`, q.values);
+    const [matching] = await db.execute(`SELECT id${schemas[req.params.entity].properties.trip_id?',trip_id':''} FROM ${entityTable(req.params.entity)} WHERE ${q.where} FOR UPDATE`, q.values);
+    for(const id of new Set(matching.map(row=>row.trip_id).filter(Boolean)))await queuePublicItinerary(db,id);
     const files = await walletFilesForRemoval(db, req.params.entity, matching.map(row => row.id), req.user.id);
     if (req.params.entity === 'TripItem') {
       const [rows] = await db.execute(`SELECT id FROM trip_items WHERE ${q.where} FOR UPDATE`, q.values);

@@ -1,3 +1,4 @@
+import {billableOperation} from './billing/usage.js';
 import {Router} from 'express';
 import {randomUUID} from 'node:crypto';
 import {rateLimit} from 'express-rate-limit';
@@ -8,6 +9,7 @@ import {scheduleWithProviders} from './scheduling-data.js';
 import {preserveMealChoices} from './meal-context.js';
 import {insertRecord} from './entities.js';
 import {assert} from './errors.js';
+import {queuePublicItinerary} from './public-itineraries/queue.js';
 
 export function healthSummary(state,plan,walletFiles=0,now=new Date()){
  const trip=state.trip,issues=[],checks=[];
@@ -83,6 +85,7 @@ export async function undoRepair(tripId,ownerId,token){
   const [[saved]]=await db.execute('SELECT * FROM itinerary_repair_history WHERE id=? AND trip_id=? AND owner_id=? AND undone=FALSE FOR UPDATE',[String(token||''),tripId,ownerId]);
   assert(saved&&saved.after_revision===revision(state)&&saved.input_hash===inputHash(state),409,'Your trip changed after this update. Undo is no longer available; your current plan is safe.');
   const previous=typeof saved.previous_state==='string'?JSON.parse(saved.previous_state):saved.previous_state;
+  await queuePublicItinerary(db,tripId);
   await db.execute('DELETE FROM itinerary_items WHERE trip_id=? AND owner_id=?',[tripId,ownerId]);
   const version=(state.trip.plan_version||0)+1;
   for(const item of previous.items)await insertRecord(db,'ItineraryItem',{...item,version},ownerId,{id:item.id,internal:true});
@@ -92,6 +95,6 @@ export async function undoRepair(tripId,ownerId,token){
 }
 export const healthRouter=Router();
 healthRouter.get('/:id/health',async(req,res)=>res.json(await readHealth(req.params.id,req.user.id)));
-healthRouter.post('/:id/repair/preview',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>req.user.id,standardHeaders:'draft-8',legacyHeaders:false}),async(req,res)=>res.json(await previewRepair(req.params.id,req.user.id)));
-healthRouter.post('/:id/repair/apply',async(req,res)=>res.json(await applyRepair(req.params.id,req.user.id,req.body.token)));
+healthRouter.post('/:id/repair/preview',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>req.user.id,standardHeaders:'draft-8',legacyHeaders:false}),async(req,res)=>res.json(await billableOperation(req.user.id,req.params.id,'smart_repair',()=>previewRepair(req.params.id,req.user.id))));
+healthRouter.post('/:id/repair/apply',async(req,res)=>res.json(await billableOperation(req.user.id,req.params.id,'smart_repair',()=>applyRepair(req.params.id,req.user.id,req.body.token))));
 healthRouter.post('/:id/repair/undo',async(req,res)=>res.json(await undoRepair(req.params.id,req.user.id,req.body.token)));

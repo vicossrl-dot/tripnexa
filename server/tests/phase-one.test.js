@@ -74,7 +74,7 @@ test('Trip names validate three short distinct choices and keep AI errors usable
   await assert.rejects(() => generateTripNames({ destination: '' }), /destination/);
 });
 test('Travel metadata remains optional and every travel type has an existing local image', async () => {
-  assert.deepEqual(validateData('Trip', { name: 'Old trip' }), { name: 'Old trip' });
+  assert.deepEqual(validateData('Trip', { name: 'Old trip' }), { name: 'Old trip', share_public_itinerary: true });
   const longPlaceId = 'a'.repeat(120);
   assert.equal(validateData('Trip', { name: 'Test', destination_place_id: longPlaceId }).destination_place_id, longPlaceId);
   assert.throws(() => validateData('Trip', { name: 'Test', travel_type: 'spaceship' }), /travel_type/);

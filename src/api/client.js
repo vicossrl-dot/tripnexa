@@ -1,19 +1,31 @@
+import {getLocale,setGeneratedTranslations} from '@/i18n/runtime';
+async function downloadTripFile(path,filename){
+ const response=await fetch(path,{credentials:'same-origin',headers:{'X-Requested-With':'TripSync','X-TripNexa-Locale':getLocale()}});
+ if(!response.ok){const data=await response.json().catch(()=>({}));if(response.status===402&&data.code)window.dispatchEvent(new CustomEvent('billing-required',{detail:data}));throw new Error(data.error||'Download failed. Please retry.');}
+ const url=URL.createObjectURL(await response.blob()),link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+ return {skipped:Number(response.headers.get('X-TripNexa-Skipped-Events')||0)};
+}
 async function request(path, options = {}) {
+  const requestLanguage=getLocale();
   const isForm = options.body instanceof FormData;
   const response = await fetch(`/api${path}`, {
     credentials: 'same-origin', ...options,
-    headers: { 'X-Requested-With': 'TripSync', ...(!isForm && options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers },
+    headers: { 'X-Requested-With': 'TripSync', 'X-TripNexa-Locale':requestLanguage, ...(!isForm && options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers },
     body: options.body && !isForm ? JSON.stringify(options.body) : options.body,
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = Object.assign(new Error(data.error || `Request failed (${response.status}).`), { status: response.status });
+    const error = Object.assign(new Error(data.error || `Request failed (${response.status}).`), data, { status: response.status });
     // Surface failed saves even in older components which catch errors silently.
-    if (!options.silent && options.method && options.method !== 'GET' && !path.startsWith('/auth') && !path.startsWith('/places')) {
+    if (response.status === 402 && data.code) {
+      window.dispatchEvent(new CustomEvent('billing-required', { detail: data }));
+    } else if (!options.silent && options.method && options.method !== 'GET' && !path.startsWith('/auth') && !path.startsWith('/places')) {
       window.dispatchEvent(new CustomEvent('api-error', { detail: error.message }));
     }
     throw error;
   }
+  if(data.displayTranslations&&getLocale()===requestLanguage)setGeneratedTranslations(data.displayTranslations,true);
+  if(options.method&&!path.endsWith('/localized-content')&&/^\/trips\/[^/]+\/(?:itinerary|planning)/.test(path))window.dispatchEvent(new CustomEvent('generated-content-changed',{detail:{tripId:path.split('/')[2]}}));
   return data;
 }
 function entity(name) {
@@ -37,6 +49,9 @@ function entity(name) {
   };
 }
 export const api = {
+  localizeTrip:(id,passport=null)=>request(`/trips/${encodeURIComponent(id)}/localized-content`,{method:'POST',body:{passport},silent:true}),
+  customizeItinerary: id => request(`/public-itineraries/${encodeURIComponent(id)}/copy`,{method:'POST',body:{}}),
+  billing: (path, body = undefined) => request('/billing' + path, { method: body ? 'POST' : 'GET', body, silent: true }),
   account: (path,body=undefined) => request('/account/'+path,{method:body?'POST':'GET',body,silent:true}),
   entities: Object.fromEntries(['Trip','TripItem','PlaceSelection','DayWindow','ItineraryItem','TodoBoard','TodoItem'].map(name => [name, entity(name)])),
   auth: {
@@ -66,16 +81,16 @@ export const api = {
     body.append('file', file);
     return request('/uploads', { method: 'POST', body });
   },
-  uploadDocument: file => {
+  uploadDocument: (file, tripId) => {
     const body = new FormData();
     body.append('file', file);
-    return request('/uploads/document', { method: 'POST', body });
+    return request('/uploads/document', { method: 'POST', body, headers: tripId ? { 'X-Trip-ID': tripId } : {} });
   },
   extractStay: body => request('/ai/stay-extraction', { method: 'POST', body }),
   wallet: {
     list: tripId => request(`/trips/${encodeURIComponent(tripId)}/wallet`),
     save: (tripId, itemId, body) => request(`/trips/${encodeURIComponent(tripId)}/wallet/items${itemId ? '/' + encodeURIComponent(itemId) : ''}`, { method:itemId ? 'PATCH' : 'POST',body }),
-    upload: file => { const body = new FormData(); body.append('file',file); return request('/uploads/wallet',{method:'POST',body}); },
+    upload: (file, tripId) => { const body = new FormData(); body.append('file',file); return request('/uploads/wallet',{method:'POST',body,headers:tripId?{'X-Trip-ID':tripId}:{}}); },
     extract: body => request('/ai/wallet-extraction',{method:'POST',body}),
   },
   sharedTrip: token => request(`/shared/${encodeURIComponent(token)}`),
@@ -84,17 +99,19 @@ export const api = {
   mealOptions: (id,meal,refresh=false) => request(`/trips/${encodeURIComponent(id)}/meals/${encodeURIComponent(meal)}/options`,{method:'POST',body:{refresh}}),
   chooseMeal: (id,meal,body) => request(`/trips/${encodeURIComponent(id)}/meals/${encodeURIComponent(meal)}/choice`,{method:'POST',body}),
   getItinerary: id => request(`/trips/${encodeURIComponent(id)}/itinerary`),
+  interactiveMap: id => request(`/trips/${encodeURIComponent(id)}/interactive-map`),
+  tripWeather: id => request(`/trips/${encodeURIComponent(id)}/weather`),
+  tripEssentials: (id,passport=null) => request(`/trips/${encodeURIComponent(id)}/essentials${passport?'?passport='+encodeURIComponent(passport):''}`),
+  refreshTripEssentials: (id,passport=null) => request(`/trips/${encodeURIComponent(id)}/essentials/refresh`,{method:'POST',body:{passport},silent:true}),
+  downloadEssentialsPdf: (id,passport=null) => downloadTripFile(`/api/trips/${encodeURIComponent(id)}/essentials/pdf${passport?'?passport='+encodeURIComponent(passport):''}`,'TripNexa-Before-You-Go.pdf'),
+  downloadCalendar: (id,{days=[],includeTransfers=true}={}) => downloadTripFile(`/api/trips/${encodeURIComponent(id)}/calendar?${new URLSearchParams({...(days.length?{days:days.join(',')}:{}),transfers:String(includeTransfers)})}`,'TripNexa-itinerary.ics'),
   tripHealth: id => request(`/trips/${encodeURIComponent(id)}/health`),
   repairTrip: (id,action,token=undefined) => request(`/trips/${encodeURIComponent(id)}/repair/${action}`,{method:'POST',body:{token},silent:true}),
   buildItinerary: (id, body = {}) => request(`/trips/${encodeURIComponent(id)}/itinerary`, { method: 'POST', body }),
   editItinerary: (id, body) => request(`/trips/${encodeURIComponent(id)}/itinerary/edit`, { method: 'POST', body }),
   previewItinerary: (id, body) => request(`/trips/${encodeURIComponent(id)}/itinerary/preview`, { method:'POST', body }),
   applyItinerary: (id, token) => request(`/trips/${encodeURIComponent(id)}/itinerary/apply`, { method:'POST', body:{token} }),
-  downloadItinerary: async id => {
-    const response=await fetch(`/api/trips/${encodeURIComponent(id)}/itinerary/pdf`,{credentials:'same-origin'});
-    if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error || 'PDF export failed. Please retry.');}
-    const url=URL.createObjectURL(await response.blob()),link=document.createElement('a');link.href=url;link.download='TripNexa-itinerary.pdf';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
-  },
+  downloadItinerary: (id,{format='quick',passport=null}={}) => downloadTripFile(`/api/trips/${encodeURIComponent(id)}/itinerary/pdf${format==='full'?'/full':''}${passport?'?passport='+encodeURIComponent(passport):''}`,format==='full'?'TripNexa-Full-Travel-Book.pdf':'TripNexa-itinerary.pdf'),
   savePlanning: (id, collection, items) => request(`/trips/${encodeURIComponent(id)}/planning/${collection}`, { method: 'PUT', body: { items } }),
   config: () => request('/config'),
   places: {

@@ -1,12 +1,16 @@
+import { t, translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 import { Minus, Plus } from "lucide-react";
 
-export default function Stepper({ value, onChange, min = 0, max = 99, step = 1, className = "" }) {
+export default function Stepper({ value, onChange, min = 0, max = 99, step = 1, className = "", label = "Quantity" }) {
+  useLocale();
   const val = value || 0;
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <button
         type="button"
+        aria-label={t("ui.decrease.value.4ab7f9a", {v0: label})}
         onClick={() => onChange(Math.max(min, val - step))}
         disabled={val <= min}
         className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:bg-white/10 disabled:opacity-30 transition-colors shrink-0"
@@ -15,6 +19,9 @@ export default function Stepper({ value, onChange, min = 0, max = 99, step = 1, 
       </button>
       <input
         type="number"
+        aria-label={translateText(label)}
+        min={min}
+        max={max}
         value={val}
         onChange={(e) => {
           const n = parseInt(e.target.value) || 0;
@@ -26,6 +33,7 @@ export default function Stepper({ value, onChange, min = 0, max = 99, step = 1, 
       />
       <button
         type="button"
+        aria-label={t("ui.increase.value.6007358", {v0: label})}
         onClick={() => onChange(Math.min(max, val + step))}
         disabled={val >= max}
         className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:bg-white/10 disabled:opacity-30 transition-colors shrink-0"

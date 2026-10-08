@@ -1,3 +1,5 @@
+import { translateText, t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { TripLoading } from '@/components/trip/TripUI';
@@ -9,6 +11,7 @@ import StepStay from "@/components/planning/StepStay";
 import StepPreferences from "@/components/planning/StepPreferences";
 import StepPlaces from "@/components/planning/StepPlaces";
 import StepSuggestions from "@/components/planning/StepSuggestions";
+import { planningStepFromSearch, toSavedPlanningStep } from '@/lib/planning-steps';
 import StepFinalize from "@/components/planning/StepFinalize";
 
 function generateDays(start, end, tripId, existing = []) {
@@ -29,6 +32,7 @@ function generateDays(start, end, tripId, existing = []) {
 }
 
 export default function PlanVisits() {
+  useLocale();
   const { tripId } = useParams();
   const navigate = useNavigate();
   const [search,setSearch] = useSearchParams();
@@ -64,12 +68,12 @@ export default function PlanVisits() {
       staysRef.current = items.filter(i => i.category === "stay");
       if (!staysRef.current.length) staysRef.current = [{}];
       setTrip(t); setPlaces(p); setDayWindows(days); setAllItems(items); setStays(staysRef.current);
-      const requested=Number(search.get('step'));
-      setStep(search.has('step')&&Number.isInteger(requested)&&requested>=0&&requested<6?requested:Math.min(5,Math.max(0,t.planning_step || 0))); setSaveError("");
+      setStep(planningStepFromSearch(search, t.planning_step)); setSaveError("");
     } catch (error) { setSaveError(error.message); }
   }
   useEffect(() => { load(); }, [tripId]);
-  useEffect(()=>{const requested=Number(search.get('step'));if(search.has('step')&&Number.isInteger(requested)&&requested>=0&&requested<6)setStep(requested);},[search]);
+  useEffect(()=>{if(search.has('step'))setStep(planningStepFromSearch(search));},[search]);
+  useEffect(()=>{window.scrollTo({top:0,left:0,behavior:'instant'});},[step]);
 
   function schedule(key, task) {
     const old = pending.current.get(key);
@@ -124,7 +128,20 @@ export default function PlanVisits() {
       }
     }
     tripRef.current = next; setTrip(next);
-    schedule("trip", () => api.entities.Trip.update(tripId, next));
+    schedule("trip", async () => {
+      const saved = await api.entities.Trip.update(tripId, next);
+      // Date entry materializes a copied public plan once. Refresh its places/windows
+      // before the user reaches later wizard steps, preserving server-assigned days.
+      if (next.itinerary_meta?.includes('public-example-pending') && saved.itinerary_meta?.includes('public-example"')) {
+        const [copiedPlaces, copiedWindows] = await Promise.all([
+          api.entities.PlaceSelection.filter({ trip_id: tripId }, 'created_date', 1000),
+          api.entities.DayWindow.filter({ trip_id: tripId }, 'date', 1000),
+        ]);
+        tripRef.current = { ...tripRef.current, itinerary_meta: saved.itinerary_meta };
+        setTrip(tripRef.current); setPlaces(copiedPlaces); setDayWindows(copiedWindows);
+      }
+      return saved;
+    });
   }
   function savePlaces(next) {
     const records = next.map(p => ({ ...p, id: p.id || crypto.randomUUID(), trip_id: tripId }));
@@ -152,30 +169,38 @@ export default function PlanVisits() {
         const existing = await api.entities.DayWindow.filter({ trip_id: tripId }, "date", 1000);
         setDayWindows(await api.savePlanning(tripId, "windows", generateDays(current.start_date, current.end_date, tripId, existing)));
       }
-      const updated = await api.entities.Trip.update(tripId, { planning_step: nextStep });
+      const updated = await api.entities.Trip.update(tripId, { planning_step: toSavedPlanningStep(nextStep) });
       tripRef.current = updated; setTrip(updated);
       setAllItems(await api.entities.TripItem.filter({ trip_id: tripId }, "created_date", 1000));
-      setStep(nextStep); setSearch({step:String(nextStep)}); setSaveError("");
+      setStep(nextStep); setSearch({step:String(nextStep),steps:'5'}); setSaveError("");
     } catch (error) { setSaveError(error.message); }
     finally { setSaving(false); }
   }
   const finalized = () => navigate("/trip/" + tripId + "/itinerary");
   if (!trip) return <TripLoading error={saveError} retry={load}/>;
   const validation=validateTripForFinalize({trip,tripItems:allItems,places});
-  const states=[validation.essential.length?'missing':'complete',stays.some(stay=>stay.address&&stay.date&&stay.end_date)?'complete':trip.stay_status==='none'?'complete':'',trip.pace?'complete':'',places.some(place=>place.priority==='mandatory')?'complete':'',places.some(place=>place.selection_source==='ai'&&place.priority!=='candidate')?'complete':'',trip.itinerary_meta?'complete':''];
+  const states=[validation.essential.length?'missing':'complete',stays.some(stay=>stay.address&&stay.date&&stay.end_date)?'complete':trip.stay_status==='none'?'complete':'',trip.pace?'complete':'',places.some(place=>place.priority==='mandatory'||(place.selection_source==='ai'&&place.priority!=='candidate'))?'complete':'',trip.itinerary_meta?'complete':''];
   return <WizardShell tripId={tripId} trip={trip} step={step} setStep={changeStep} saving={saving} beforeNavigate={flush} states={states} saveError={saveError} onUpdated={updated=>{tripRef.current=updated;setTrip(updated);}}
     onPrev={() => changeStep(Math.max(0, step - 1))}
-    onNext={() => step === 5 ? finalized() : changeStep(step + 1)}
-    nextLabel={step === 5 ? "View itinerary" : "Save & continue"}
-    canNext={!saving && !saveError && (step !== 5 || essentialCount === 0)}>
-    {saveError && <div role="alert" className="p-3 text-red-300"><p>{saveError}</p>
-      <button className="underline" onClick={() => flush().then(() => setSaveError("")).catch(error => setSaveError(error.message))}>Retry saving</button>
+    onNext={() => step === 4 ? finalized() : changeStep(step + 1)}
+    nextLabel={translateText(step === 4 ? "View itinerary" : "Save & continue")}
+    canNext={!saving && !saveError && (step !== 4 || essentialCount === 0)}>
+    {saveError && <div role="alert" className="p-3 text-red-300"><p>{translateText(saveError)}</p>
+      <button className="underline" onClick={() => flush().then(() => setSaveError("")).catch(error => setSaveError(error.message))}>{t("ui.retry.saving.3adee60")}</button>
     </div>}
     {step === 0 && <StepTrip trip={trip} update={updateTrip} />}
+    {step === 0 && trip.itinerary_meta?.includes('public-example') && <div className="trip-card mt-5 text-sm"><strong>{t("ui.your.example.is.ready.to.personalize.4c49f9b")}</strong><p className="mt-2 text-stone-600">{t("ui.the.trip.name.includes.the.example.s.length.add.dates.covering.at.cb9957e")}</p></div>}
+    {step === 0 && <div className="trip-card mt-5"><label className="flex items-start gap-3 cursor-pointer"><input type="checkbox" className="mt-1 h-5 w-5 accent-orange-700" checked={trip.share_public_itinerary===true} onChange={event=>updateTrip('share_public_itinerary',event.target.checked)}/><span><strong className="text-sm">{t("ui.share.an.anonymized.version.of.this.trip.to.help.other.travelers.e4e0495")}</strong><span className="block text-xs leading-relaxed mt-2 text-stone-600">{t("ui.only.your.itinerary.structure.places.restaurant.meal.choices.and.10967cc")}</span><span className="block text-xs leading-relaxed mt-2 text-stone-600">{t("ui.only.completed.trips.that.pass.privacy.and.quality.checks.are.eli.b70b92d")}</span></span></label></div>}
     {step === 1 && <StepStay tripId={tripId} trip={trip} update={updateTrip} stays={stays} onStayChange={onStayChange} />}
     {step === 2 && <StepPreferences trip={trip} update={updateTrip} dayWindows={dayWindows} onWindowsChange={saveWindows} />}
-    {step === 3 && <StepPlaces key={tripId} tripId={tripId} trip={trip} places={places} onPlacesChange={savePlaces} />}
-    {step === 4 && <StepSuggestions key={tripId} trip={trip} dayWindows={dayWindows} places={places} onPlacesChange={savePlaces} beforeGenerate={flush} />}
-    {step === 5 && <StepFinalize trip={trip} dayWindows={dayWindows} places={places} tripItems={allItems} onFinalize={finalized} onGoToStep={changeStep} onValidation={setEssentialCount} />}
+    {step === 3 && <div className="space-y-8">
+      <section aria-labelledby="must-see-heading"><h3 id="must-see-heading" className="text-xl font-semibold">{t('planner.mustSee')}</h3><p className="trip-muted mt-2 mb-5">{t('planner.mustSeeDescription')}</p><StepPlaces key={tripId} tripId={tripId} trip={trip} places={places} onPlacesChange={savePlaces} /></section>
+      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 sm:px-5">
+        <p className="font-semibold text-sm">{t('planner.inspirationTitle')}</p>
+        <p className="trip-muted text-sm mt-1">{t('planner.inspirationDescription')}</p>
+      </div>
+      <section aria-labelledby="ai-suggestions-heading" className="border-t border-white/10 pt-8"><h3 id="ai-suggestions-heading" className="text-xl font-semibold">{t('planner.aiSuggestions')}</h3><p className="trip-muted mt-2 mb-5">{t('planner.aiDescription')}</p><StepSuggestions key={tripId} autoGenerate={false} trip={trip} dayWindows={dayWindows} places={places} onPlacesChange={savePlaces} beforeGenerate={flush} /></section>
+    </div>}
+    {step === 4 && <StepFinalize trip={trip} dayWindows={dayWindows} places={places} tripItems={allItems} onFinalize={finalized} onGoToStep={changeStep} onValidation={setEssentialCount} />}
   </WizardShell>;
 }

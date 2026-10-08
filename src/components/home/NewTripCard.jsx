@@ -1,13 +1,17 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React from "react";
 import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function NewTripCard({ onClick }) {
+  useLocale();
   return (
     <motion.button
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
+      aria-label={t("ui.new.trip.52a1468")}
       className="group shrink-0 flex w-[140px] sm:w-[155px] flex-col items-center gap-3 px-2 pt-2 pb-1 text-white/70 hover:text-white transition-colors"
     >
       <div className="h-[68px] flex items-end justify-center">
@@ -18,8 +22,8 @@ export default function NewTripCard({ onClick }) {
         </div>
       </div>
       <div className="text-center">
-        <span className="font-heading font-medium tracking-tight text-base leading-tight block">New Trip</span>
-        <span className="mt-1 block text-[13px] font-light uppercase tracking-[0.08em] text-white/70 whitespace-nowrap">Pack a new bag</span>
+        <span className="font-heading font-medium tracking-tight text-base leading-tight block">{t("ui.new.trip.52a1468")}</span>
+        <span className="mt-1 block text-[13px] font-light uppercase tracking-[0.08em] text-white/70 whitespace-nowrap">{t("ui.pack.a.new.bag.2bf5234")}</span>
       </div>
     </motion.button>
   );

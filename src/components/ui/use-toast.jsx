@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 250;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -111,7 +111,10 @@ function dispatch(action) {
 }
 
 function toast({ ...props }) {
-  const id = genId();
+  const duplicate = typeof props.title === 'string' && typeof props.description === 'string'
+    ? memoryState.toasts.find(item => item.open && item.title === props.title && item.description === props.description && item.variant === props.variant)
+    : null;
+  const id = duplicate?.id || genId();
 
   const update = (props) =>
     dispatch({
@@ -123,7 +126,7 @@ function toast({ ...props }) {
     dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id });
 
   dispatch({
-    type: actionTypes.ADD_TOAST,
+    type: duplicate ? actionTypes.UPDATE_TOAST : actionTypes.ADD_TOAST,
     toast: {
       ...props,
       id,

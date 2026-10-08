@@ -1,3 +1,5 @@
+import { t, translateText, getLocale } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
@@ -5,6 +7,7 @@ import { MapPin, Stamp } from "lucide-react";
 import PassportStamp from "@/components/home/PassportStamp";
 
 export default function TravelPassport() {
+  useLocale();
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -53,7 +56,7 @@ export default function TravelPassport() {
         ].map((s) => (
           <div key={s.label} className="bg-neutral-100 rounded-[12px] p-4 text-center">
             <p className="font-heading font-black text-2xl text-neutral-900 leading-none">{s.value}</p>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-600 mt-1.5">{s.label}</p>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-600 mt-1.5">{translateText(s.label)}</p>
           </div>
         ))}
       </div>
@@ -61,7 +64,7 @@ export default function TravelPassport() {
       {data.completed.length === 0 ? (
         <div className="text-center py-10">
           <Stamp className="w-8 h-8 text-neutral-300 mx-auto mb-3" />
-          <p className="text-sm text-neutral-600">No stamps yet, your finished trips will land here.</p>
+          <p className="text-sm text-neutral-600">{t("ui.no.stamps.yet.your.finished.trips.will.land.here.ab0077a")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -79,7 +82,7 @@ export default function TravelPassport() {
                   </p>
                 )}
                 <p className="text-xs text-neutral-500 mt-1">
-                  {new Date(trip.first).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – {new Date(trip.last).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  {new Date(trip.first).toLocaleDateString(getLocale(), { day: "numeric", month: "short" })} – {new Date(trip.last).toLocaleDateString(getLocale(), { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               </div>
               <div className="relative w-[90px] h-[80px] shrink-0">

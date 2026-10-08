@@ -1,8 +1,11 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState } from "react";
 import { ExternalLink, Zap, ChevronDown } from "lucide-react";
 import { getCategory } from "./categories";
 
 export default function QuickLinksSidebar({ items, onSelect }) {
+  useLocale();
   const quick = items.filter((i) => ["flight", "stay", "document"].includes(i.category));
   const [open, setOpen] = useState(false);
   return (
@@ -11,12 +14,12 @@ export default function QuickLinksSidebar({ items, onSelect }) {
         <div className="bg-lime rounded-xl p-4 shadow-xl">
           <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2">
             <Zap className="w-4 h-4 text-neutral-900" />
-            <h2 className="flex-1 text-left text-[13px] font-bold uppercase tracking-widest text-neutral-800">Quick Links</h2>
+            <h2 className="flex-1 text-left text-[13px] font-bold uppercase tracking-widest text-neutral-800">{t("ui.quick.links.62b3499")}</h2>
             <ChevronDown className={`w-4 h-4 text-neutral-900 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
           </button>
           {open && (
             quick.length === 0 ? (
-              <p className="mt-4 text-sm text-neutral-800/70 px-1 pb-1">Your flights, stays & documents will show up here for 1-tap access.</p>
+              <p className="mt-4 text-sm text-neutral-800/70 px-1 pb-1">{t("ui.your.flights.stays.documents.will.show.up.here.for.1.tap.access.e571e71")}</p>
             ) : (
               <div className="mt-4 space-y-1.5">
                 {quick.map((item) => {
@@ -36,7 +39,7 @@ export default function QuickLinksSidebar({ items, onSelect }) {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2 rounded-full text-neutral-700 hover:text-neutral-900 hover:bg-black/10 transition-colors shrink-0"
-                          title="Open link"
+                          title={t("ui.open.link.aab63f8")}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>

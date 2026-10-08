@@ -1,3 +1,5 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import { useState } from 'react';
 import './Folder.css';
 
@@ -24,6 +26,7 @@ const darkenColor = (hex, percent) => {
  * @param {{ color?: string, size?: number, items?: import('react').ReactNode[], className?: string, openDirection?: 'up' | 'right', onOpen?: () => void }} props
  */
 const Folder = ({ color = '#5227FF', size = 1, items = [], className = '', openDirection = 'up', onOpen }) => {
+  useLocale();
   const maxItems = 3;
   const papers = items.slice(0, maxItems);
 
@@ -109,7 +112,7 @@ const Folder = ({ color = '#5227FF', size = 1, items = [], className = '', openD
         tabIndex={0}
         role="button"
         aria-expanded={open}
-        aria-label={open ? 'Close folder' : 'Open folder'}
+        aria-label={open ? t("ui.close.folder.8409ff9") : t("ui.open.folder.6a90840")}
       >
         <div className="folder__back">
           {papers.map((item, i) => (

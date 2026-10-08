@@ -11,6 +11,7 @@ import { scheduleItinerary, tripDates, minute, selectedPlaces, isRequiredPlace, 
 import { withBookingLinks } from './referrals.js';
 import { samePlace } from '../src/lib/place-matching.js';
 import {scheduleWithProviders,prepareScheduling} from './scheduling-data.js';
+import {queuePublicItinerary} from './public-itineraries/queue.js';
 
 export async function snapshot(db, tripId, ownerId, lock = false) {
   const trip = serialize('Trip', await owned(db, 'Trip', tripId, ownerId, lock));
@@ -22,7 +23,7 @@ export async function snapshot(db, tripId, ownerId, lock = false) {
 }
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function clean(record, newOptional = []) {
-  const ignored = new Set(['created_date','updated_date','created_by_id','planning_step','plan_status','plan_version','last_validated_at','itinerary_meta','share_enabled','share_hide_stay','share_token','arrival_ticket_url','departure_ticket_url','reservation_file_url','airline','traveler']);
+  const ignored = new Set(['created_date','updated_date','created_by_id','planning_step','plan_status','plan_version','last_validated_at','itinerary_meta','share_enabled','share_public_itinerary','share_hide_stay','share_token','arrival_ticket_url','departure_ticket_url','reservation_file_url','airline','traveler']);
   return Object.fromEntries(Object.entries(record).filter(([key,value]) => !ignored.has(key) && !(newOptional.includes(key) && value == null)).sort(([a], [b]) => a.localeCompare(b)));
 }
 const optionalLocations = ['arrival','departure'].flatMap(direction => ['place_id','address','city','country','lat','lng'].map(field => `${direction}_${field}`));
@@ -48,6 +49,7 @@ export async function present(state) {
 }
 export async function readItinerary(tripId, ownerId) { return present(await transaction(db => snapshot(db, tripId, ownerId))); }
 export async function persist(db, state, result, meta, affected = null) {
+  await queuePublicItinerary(db,state.trip.id);
   preserveMealChoices(state,result.items);
   if (affected) await db.execute(`DELETE FROM itinerary_items WHERE trip_id=? AND owner_id=? AND date IN (${affected.map(() => '?').join(',')})`, [state.trip.id, state.trip.created_by_id, ...affected]);
   else await db.execute('DELETE FROM itinerary_items WHERE trip_id=? AND owner_id=?', [state.trip.id, state.trip.created_by_id]);

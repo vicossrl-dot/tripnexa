@@ -1,5 +1,7 @@
+import { translateText, t, formatAppDate } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useEffect, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { getCategory } from "./categories";
 import CanvasTabs from "./CanvasTabs";
@@ -23,6 +25,7 @@ function useColumnCount() {
 }
 
 export default function CanvasView({ items, onSelect }) {
+  useLocale();
   const colCount = useColumnCount();
   const [tab, setTab] = useState("flight");
 
@@ -52,12 +55,12 @@ export default function CanvasView({ items, onSelect }) {
         )}
         <div className="p-5">
           <span className={`inline-flex items-center gap-1.5 text-[13px] font-light uppercase tracking-wider px-2.5 py-1 rounded-full ${cat.soft}`}>
-            <Icon className="w-3 h-3" /> {cat.label}
+            <Icon className="w-3 h-3" /> {translateText(cat.label)}
           </span>
           <h3 className="mt-3 font-heading font-medium tracking-[-0.03em] text-2xl text-neutral-900 leading-[0.95]">{item.title}</h3>
           {item.date && (
             <p className="mt-2 text-[13px] font-light uppercase tracking-[0.15em] text-neutral-600">
-              {format(parseISO(item.date), "EEE, MMM d")}
+              {formatAppDate(parseISO(item.date), "EEE, MMM d")}
               {item.time ? ` · ${item.time}` : ""}
             </p>
           )}
@@ -72,7 +75,7 @@ export default function CanvasView({ items, onSelect }) {
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
           {visible.length === 0 ? (
-            <p className="text-center text-white/75 py-16">Nothing in this category yet.</p>
+            <p className="text-center text-white/75 py-16">{t("ui.nothing.in.this.category.yet.0b7501a")}</p>
           ) : (
             <div className="flex gap-[15px] items-start">
               {cols.map((col, ci) => (

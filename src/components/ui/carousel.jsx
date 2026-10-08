@@ -1,3 +1,5 @@
+import { t } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import * as React from "react"
 import useEmblaCarousel from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react"
@@ -29,6 +31,7 @@ const Carousel = React.forwardRef((
   },
   ref
 ) => {
+  useLocale();
   const [carouselRef, api] = useEmblaCarousel({
     ...opts,
     axis: orientation === "horizontal" ? "x" : "y",
@@ -113,6 +116,7 @@ const Carousel = React.forwardRef((
 Carousel.displayName = "Carousel"
 
 const CarouselContent = React.forwardRef(({ className, ...props }, ref) => {
+  useLocale();
   const { carouselRef, orientation } = useCarousel()
 
   return (
@@ -131,6 +135,7 @@ const CarouselContent = React.forwardRef(({ className, ...props }, ref) => {
 CarouselContent.displayName = "CarouselContent"
 
 const CarouselItem = React.forwardRef(({ className, ...props }, ref) => {
+  useLocale();
   const { orientation } = useCarousel()
 
   return (
@@ -149,6 +154,7 @@ const CarouselItem = React.forwardRef(({ className, ...props }, ref) => {
 CarouselItem.displayName = "CarouselItem"
 
 const CarouselPrevious = React.forwardRef(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  useLocale();
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
@@ -163,13 +169,14 @@ const CarouselPrevious = React.forwardRef(({ className, variant = "outline", siz
       onClick={scrollPrev}
       {...props}>
       <ArrowLeft className="h-4 w-4" />
-      <span className="sr-only">Previous slide</span>
+      <span className="sr-only">{t("ui.previous.slide.bfb5492")}</span>
     </Button>)
   );
 })
 CarouselPrevious.displayName = "CarouselPrevious"
 
 const CarouselNext = React.forwardRef(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  useLocale();
   const { orientation, scrollNext, canScrollNext } = useCarousel()
 
   return (
@@ -184,7 +191,7 @@ const CarouselNext = React.forwardRef(({ className, variant = "outline", size = 
       onClick={scrollNext}
       {...props}>
       <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">Next slide</span>
+      <span className="sr-only">{t("ui.next.slide.cdc93d1")}</span>
     </Button>)
   );
 })

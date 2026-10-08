@@ -45,7 +45,7 @@ try{
  await browser.navigate(root+base+'/plan?step=2');await text('Daily planning hours');
  const wishes='Keep one afternoon free and avoid early mornings.';
  await input('#special-wishes',wishes);await browser.pause(800);await wait("!document.body.innerText.includes('Saving…')");await command('Page.reload');await browser.pause(600);await wait(`document.querySelector('#special-wishes')?.value===${JSON.stringify(wishes)}`);assert.equal((await api('/entities/Trip/'+trip.id)).special_wishes,wishes);pass('Special wishes saved in MySQL and survive reload; Daily planning hours displayed');
- await evaluate("document.querySelector('[data-plan-step=\"4\"]').click()");await text('Step 5 of 6');
+ await evaluate("document.querySelector('[data-plan-step=\"3\"]').click()");await text('Step 4 of 5');await click('Generate suggestions');
  await wait("document.querySelectorAll('[data-suggestion-card]').length>=3",150000);
  await wait("[...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='Accept'&&!b.disabled)",150000);
  await browser.screenshot('suggestions');await auditControls('Suggestions');
@@ -62,7 +62,7 @@ try{
  await evaluate("[...document.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')?.startsWith('View photo'))?.click()");await wait("!!document.querySelector('[role=dialog] img')");await browser.pause(300);await browser.screenshot('photo-lightbox');
  if(await evaluate("!document.querySelector('[role=dialog] button:last-child')?.disabled")){await evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b=>b.textContent.trim()==='Next photo'&&!b.disabled)?.click()");}
  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await wait("!document.querySelector('[role=dialog]')");pass('Real Google photographs load; lightbox, next and Escape work');
- await evaluate("document.querySelector('[data-plan-step=\"5\"]').click()");await text('Generate itinerary');await click('Generate itinerary');await wait("document.body.innerText.includes('View full itinerary')",150000);
+ await evaluate("document.querySelector('[data-plan-step=\"4\"]').click()");await text('Generate itinerary');await click('Generate itinerary');await wait("document.body.innerText.includes('View full itinerary')",150000);
  let plan=await api(`/trips/${trip.id}/itinerary`);assert.equal(plan.generation,'ai',plan.message);
  for(const p of saved)assert(plan.items.some(i=>i.selection_id===p.id)||plan.conflicts.some(c=>c.place===p.name),'Selected place silently lost: '+p.name);
  assert.equal(plan.items.filter(i=>i.step_type==='visit').length,saved.length,JSON.stringify(plan.conflicts));

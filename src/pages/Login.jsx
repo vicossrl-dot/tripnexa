@@ -1,3 +1,5 @@
+import { t, translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
@@ -6,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
-import { safeReturnTo } from '@/lib/authReturnTo';
+import { safeReturnTo, resumeReturnTo } from '@/lib/authReturnTo';
 import SocialButtons from '@/components/SocialButtons';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Login() {
+  useLocale();
   const { checkUserAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +37,7 @@ export default function Login() {
       // Confirm that the new server session is visible before leaving /login.
       await checkUserAuth();
 
-      const target = safeReturnTo();
+      const target = await resumeReturnTo();
       window.location.replace(target);
     } catch (err) {
       setError(err.message || "Invalid email or password");
@@ -47,14 +50,11 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+      title={t("ui.welcome.back.6621249")}
+      subtitle={t("ui.log.in.to.your.account.62f1fe1")}
       footer={
-        <>
-          Don't have an account?{" "}
-          <Link to="/register" className="text-primary font-medium hover:underline">
-            Create one
-          </Link>
+        <>{t("ui.don.t.have.an.account.1b545b2")}{" "}
+          <Link to={'/register?returnTo='+encodeURIComponent(safeReturnTo())} className="text-primary font-medium hover:underline">{t("ui.create.one.b6ab95e")}</Link>
         </>
       }
     >
@@ -62,13 +62,13 @@ export default function Login() {
 
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
+          {translateText(error)}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("ui.email.969ccbd")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -77,7 +77,7 @@ export default function Login() {
               type="email"
               autoComplete="email"
               autoFocus
-              placeholder="you@example.com"
+              placeholder={t("ui.you.example.com.53e6cdc")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10 h-12"
@@ -87,10 +87,8 @@ export default function Login() {
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
-            </Link>
+            <Label htmlFor="password">{t("ui.password.e7cf3ef")}</Label>
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">{t("ui.forgot.password.30c1d8d")}</Link>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
@@ -110,11 +108,9 @@ export default function Login() {
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
-            </>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("ui.logging.in.09491d8")}</>
           ) : (
-            "Log in"
+            t("ui.log.in.c189840")
           )}
         </Button>
       </form>

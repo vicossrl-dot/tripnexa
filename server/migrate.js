@@ -1,11 +1,16 @@
+import {migrateStorage} from './storage/migrate.js';
 import { pathToFileURL } from 'node:url';
 import { pool } from './db.js';
 import { schemas, tables } from './schema.js';
 import { migrateAdmin } from './admin/migrate.js';
 import {migrateAffiliates} from './affiliate-providers/migrate.js';
 import {migrateSocial} from './social-auth/migrate.js';
+import {migrateBilling} from './billing/migrate.js';
+import {migratePublicItineraries} from './public-itineraries/migrate.js';
+import {migratePremiumTravel} from './premium-travel/migrate.js';
 
 function column(key, field) {
+  if (key === 'ui_locale') return '`ui_locale` VARCHAR(5) NULL';
   if (key === 'place_id' || key.endsWith('_place_id')) return `\`${key}\` VARCHAR(255) NULL`;
   if (key.endsWith('_id')) return `\`${key}\` VARCHAR(64) NULL`;
   if (key === 'share_token') return '`share_token` VARCHAR(64) NULL UNIQUE';
@@ -15,6 +20,8 @@ function column(key, field) {
 export async function migrate() {
   const common = 'id VARCHAR(64) PRIMARY KEY, created_date DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), updated_date DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)';
   await pool.query(`CREATE TABLE IF NOT EXISTS users (${common}, email VARCHAR(254) NOT NULL UNIQUE, password_hash VARCHAR(255) NULL, email_verified BOOLEAN NOT NULL DEFAULT FALSE, ${Object.entries(schemas.User.properties).map(([k,v]) => column(k,v)).join(', ')}) ENGINE=InnoDB`);
+  const [userLocaleColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'ui_locale'");
+  if (!userLocaleColumns.length) await pool.query('ALTER TABLE users ADD COLUMN ui_locale VARCHAR(5) NULL');
   for (const [name, table] of Object.entries(tables)) {
     const parent = name === 'TodoItem' ? ['board_id', 'todo_boards'] : schemas[name].properties.trip_id ? ['trip_id', 'trips'] : null;
     const fields = Object.entries(schemas[name].properties).map(([k,v]) => column(k,v));
@@ -68,6 +75,10 @@ export async function migrate() {
   await migrateAdmin(pool);
   await migrateAffiliates(pool);
   await migrateSocial(pool);
+  await migrateBilling(pool);
+  await migrateStorage(pool);
+  await migratePublicItineraries(pool);
+  await migratePremiumTravel(pool);
   await pool.query(`CREATE TABLE IF NOT EXISTS itinerary_repair_history (
     id VARCHAR(64) PRIMARY KEY, trip_id VARCHAR(64) NOT NULL, owner_id VARCHAR(64) NOT NULL,
     previous_state JSON NOT NULL, after_revision CHAR(64) NOT NULL, input_hash CHAR(64) NOT NULL,

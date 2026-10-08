@@ -1,3 +1,5 @@
+import { t, translateText } from "@/i18n/runtime";
+import { useLocale } from "@/i18n/react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
@@ -9,8 +11,10 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import AuthLayout from "@/components/AuthLayout";
 import { toast } from "@/components/ui/use-toast";
 import SocialButtons from '@/components/SocialButtons';
+import {safeReturnTo,resumeReturnTo} from '@/lib/authReturnTo';
 
 export default function Register() {
+  useLocale();
   const [email, setEmail] = useState(new URLSearchParams(window.location.search).get('verifyEmail')||'');
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,7 +46,7 @@ export default function Register() {
     setLoading(true);
     try {
       await api.auth.verifyOtp({ email, otpCode });
-      window.location.href = "/";
+      window.location.href = await resumeReturnTo();
     } catch (err) {
       setError(err.message || "Invalid verification code");
     } finally {
@@ -71,12 +75,12 @@ export default function Register() {
     return (
       <AuthLayout
         icon={Mail}
-        title="Verify your email"
-        subtitle={`We sent a code to ${email}`}
+        title={t("ui.verify.your.email.bb26594")}
+        subtitle={t("ui.we.sent.a.code.to.value.a691fe4", {v0: email})}
       >
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-            {error}
+            {translateText(error)}
           </div>
         )}
         <div className="flex justify-center mb-6">
@@ -104,18 +108,13 @@ export default function Register() {
         >
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Verifying...
-            </>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("ui.verifying.2ec1ac7")}</>
           ) : (
-            "Verify"
+            t("ui.verify.eea2745")
           )}
         </Button>
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Didn't receive the code?{" "}
-          <button disabled={loading} onClick={handleResend} className="text-primary font-medium hover:underline min-h-11">
-            Resend
-          </button>
+        <p className="text-center text-sm text-muted-foreground mt-4">{t("ui.didn.t.receive.the.code.47a0818")}{" "}
+          <button disabled={loading} onClick={handleResend} className="text-primary font-medium hover:underline min-h-11">{t("ui.resend.1f94843")}</button>
         </p>
       </AuthLayout>
     );
@@ -124,14 +123,11 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Create your account"
-      subtitle="Sign up to get started"
+      title={t("ui.create.your.account.9e70934")}
+      subtitle={t("ui.sign.up.to.get.started.6f5ac45")}
       footer={
-        <>
-          Already have an account?{" "}
-          <Link to="/login" className="text-primary font-medium hover:underline">
-            Log in
-          </Link>
+        <>{t("ui.already.have.an.account.e77fea9")}{" "}
+          <Link to={'/login?returnTo='+encodeURIComponent(safeReturnTo())} className="text-primary font-medium hover:underline">{t("ui.log.in.c189840")}</Link>
         </>
       }
     >
@@ -139,13 +135,13 @@ export default function Register() {
 
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
+          {translateText(error)}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("ui.email.969ccbd")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -153,7 +149,7 @@ export default function Register() {
               type="email"
               autoComplete="email"
               autoFocus
-              placeholder="you@example.com"
+              placeholder={t("ui.you.example.com.53e6cdc")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10 h-12"
@@ -162,7 +158,7 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t("ui.password.e7cf3ef")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -178,7 +174,7 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirm">{t("ui.confirm.password.c292210")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -196,11 +192,9 @@ export default function Register() {
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating account...
-            </>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("ui.creating.account.7dd3701")}</>
           ) : (
-            "Create account"
+            t("ui.create.account.798ca2c")
           )}
         </Button>
       </form>
